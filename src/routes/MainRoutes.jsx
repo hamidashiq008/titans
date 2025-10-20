@@ -4,6 +4,7 @@ import AdminLayout from 'layouts/AdminLayout';
 import GuestLayout from 'layouts/GuestLayout';
 
 const DashboardSales = lazy(() => import('../views/dashboard/DashSales/index'));
+const AddCars = lazy(() => import('../views/cars/AddCars'));
 
 const Typography = lazy(() => import('../views/ui-elements/basic/BasicTypography'));
 const Color = lazy(() => import('../views/ui-elements/basic/BasicColor'));
@@ -27,6 +28,10 @@ const MainRoutes = {
         {
           path: '/dashboard/sales',
           element: <DashboardSales />
+        },
+        {
+          path: '/cars/add-cars',
+          element: <AddCars />
         },
         {
           path: '/typography',

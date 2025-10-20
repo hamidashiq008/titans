@@ -25,6 +25,29 @@ const menuItems = {
       ]
     },
     {
+      id: 'car',
+      title: 'Cars',
+      type: 'group',
+      icon: 'icon-navigation',
+      children: [
+        {
+          id: 'cars',
+          title: 'cars',
+          type: 'collapse',
+          icon: 'material-icons-two-tone',
+          iconname: 'home',
+          children: [
+            {
+              id: 'car edit',
+              title: 'car edit',
+              type: 'item',
+              url: '/cars/add-cars'
+            }
+          ]
+        }
+      ]
+    },
+    {
       id: 'ui-element',
       title: 'ELEMENTS',
       subtitle: 'UI Components',

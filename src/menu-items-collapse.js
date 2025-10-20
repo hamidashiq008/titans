@@ -19,9 +19,32 @@ const menuItems = {
               url: '/dashboard/sales'
             }
           ]
-        }
+        },
+
       ]
     },
+    // {
+    //   id: 'Cars',
+    //   title: 'Cars',
+    //   type: 'group',
+
+    //   children: [
+    //     {
+    //       id: 'cars',
+    //       title: 'Cars',
+    //       type: 'collapse',
+    //       children: [
+    //         {
+    //           id: 'cars details',
+    //           title: 'cars details',
+    //           type: 'item',
+    //           url: '/dashboard/sales'
+    //         }
+    //       ]
+    //     },
+
+    //   ]
+    // },
     {
       type: 'group',
       id: 'components-group',
