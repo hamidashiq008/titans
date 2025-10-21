@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-
+import { useNavigate } from 'react-router-dom';
 // react-bootstrap
 import { Card, Row, Col, Button, Form, InputGroup } from 'react-bootstrap';
 
@@ -8,10 +9,40 @@ import FeatherIcon from 'feather-icons-react';
 
 // assets
 import logoDark from 'assets/images/logo-dark.svg';
+import axios from '../../axios/Axios';
+import { toast } from 'react-toastify';
 
 // -----------------------|| SIGNIN 1 ||-----------------------//
 
 export default function SignIn1() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [remember, setRemember] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [loginData, setLoginData] = useState('');
+  const navigate = useNavigate();
+
+  const handleLogin = async () => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      const res = await axios.post('/auth/login', {
+        email,
+        password
+      });
+      setLoginData(res.data);
+      console.log('res', res);
+      localStorage.setItem('access_token', res.data.access_token);
+      toast.success('Logged in successfully');
+      navigate('/dashboard/sales');
+
+    } catch (e) {
+      console.error(e);
+      toast.error(e?.response?.data?.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="auth-wrapper">
       <div className="auth-content text-center">
@@ -25,18 +56,20 @@ export default function SignIn1() {
                   <InputGroup.Text>
                     <FeatherIcon icon="mail" />
                   </InputGroup.Text>
-                  <Form.Control type="email" placeholder="Email address" />
+                  <Form.Control type="email" placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)} />
                 </InputGroup>
                 <InputGroup className="mb-3">
                   <InputGroup.Text>
                     <FeatherIcon icon="lock" />
                   </InputGroup.Text>
-                  <Form.Control type="password" placeholder="Password" />
+                  <Form.Control type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
                 </InputGroup>
                 <Form.Group>
-                  <Form.Check type="checkbox" className="text-left mb-4 mt-2" label="Save Credentials." defaultChecked />
+                  <Form.Check type="checkbox" className="text-left mb-4 mt-2" label="Save Credentials." checked={remember} onChange={(e) => setRemember(e.target.checked)} />
                 </Form.Group>
-                <Button className="btn btn-block btn-primary mb-4">Signin</Button>
+                <Button className="btn btn-block btn-primary mb-4" onClick={handleLogin} disabled={loading}>
+                  {loading ? 'Signing in…' : 'Signin'}
+                </Button>
                 <p className="mb-2 text-muted">
                   Forgot password?{' '}
                   <NavLink to="#" className="f-w-400">
@@ -57,3 +90,4 @@ export default function SignIn1() {
     </div>
   );
 }
+

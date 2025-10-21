@@ -15,9 +15,13 @@ import { SalesSupportChartData } from './chart/sales-support-chart';
 import { SalesSupportChartData1 } from './chart/sales-support-chart1';
 import feedData from 'data/feedData';
 import productData from 'data/productTableData';
-
+import { useNavigate } from 'react-router-dom';
 // -----------------------|| DASHBOARD SALES ||-----------------------//
 export default function DashSales() {
+
+  const navigate = useNavigate();
+
+ 
   return (
     <Row>
       <Col md={12} xl={6}>

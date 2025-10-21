@@ -34,7 +34,7 @@ export default function NavRight() {
           <Dropdown.Toggle as="a" variant="link" className="pc-head-link arrow-none me-0 user-name">
             <img src={avatar2} alt="userimage" className="user-avatar" />
             <span>
-              <span className="user-name">Joseph William</span>
+              <span className="user-name">Haris Arif</span>
               <span className="user-desc">Administrator</span>
             </span>
           </Dropdown.Toggle>
@@ -50,7 +50,10 @@ export default function NavRight() {
             <Link to="/auth/signin-2" className="dropdown-item">
               <i className="feather icon-lock" /> Lock Screen
             </Link>
-            <Link to="#" className="dropdown-item">
+            <Link to="#" className="dropdown-item" onClick={() => {
+              localStorage.removeItem('access_token'); 
+              window.location.href = '/auth/login';
+            }}>
               <i className="material-icons-two-tone">chrome_reader_mode</i> Logout
             </Link>
           </Dropdown.Menu>
