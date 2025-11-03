@@ -247,7 +247,7 @@ const ListUsers = () => {
             <div className="container py-4">
                 <div className="card shadow-sm p-4">
                     <div className="header d-flex justify-content-between align-items-center mb-4">
-                        <h3 className="m-0">Users</h3>
+                        <h3 className="m-0">List Users</h3>
                         <div className="d-flex gap-2">
                             <div className="search-box">
                                 <input
@@ -259,7 +259,7 @@ const ListUsers = () => {
                                 />
                                 <i className="fas fa-search search-icon"></i>
                             </div>
-                            <button 
+                            {/* <button 
                                 className="btn btn-primary"
                                 onClick={() => {
                                     setEditingUser(null);
@@ -277,7 +277,7 @@ const ListUsers = () => {
                                 }}
                             >
                                 <i className="fas fa-plus me-2"></i> Add User
-                            </button>
+                            </button> */}
                         </div>
                     </div>
                     

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import axios from '../../axios/Axios';
 import { X } from 'react-feather';
@@ -9,7 +9,7 @@ const AddUser = () => {
         email: '',
         phone: '',
         address: '',
-        role: 'user',
+        role: '',
         password: '',
         password_confirmation: '',
         is_active: true,
@@ -17,6 +17,36 @@ const AddUser = () => {
     });
     const [imagePreview, setImagePreview] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [roles, setRoles] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        // Fetch roles from API
+        const fetchRoles = async () => {
+            try {
+                const response = await axios.get('/roles');
+                setRoles(response.data.roles || []);
+            } catch (error) {
+                console.error('Error fetching roles:', error); 
+
+                setRoles([
+                    { id: 'user', name: 'User' },
+                    { id: 'admin', name: 'Admin' }
+                ]);
+                
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchRoles();
+
+        return () => {
+            if (imagePreview) {
+                URL.revokeObjectURL(imagePreview);
+            }
+        };
+    }, [imagePreview]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -90,7 +120,7 @@ const AddUser = () => {
                 email: '',
                 phone: '',
                 address: '',
-                role: 'user',
+                role: '',
                 password: '',
                 password_confirmation: '',
                 is_active: true,
@@ -212,11 +242,16 @@ const AddUser = () => {
                                     value={formData.role}
                                     onChange={handleChange}
                                     required
+                                    disabled={isLoading}
                                 >
-                                    <option value="user">User</option>
-                                    <option value="admin">Admin</option>
-                                    <option value="manager">Manager</option>
+                                    <option value="">Select a role</option>
+                                    {roles.map(role => (
+                                        <option key={role.id} value={role.id}>
+                                            {role.name}
+                                        </option>
+                                    ))}
                                 </select>
+                                {isLoading && <div className="form-text">Loading roles...</div>}
                             </div>
 
                             {/* Password */}
