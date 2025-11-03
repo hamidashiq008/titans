@@ -1,4 +1,4 @@
- 
+
 
 
 import { lazy, useEffect, useState } from 'react';
@@ -6,6 +6,8 @@ import { Navigate, useNavigate } from 'react-router-dom';
 
 import AdminLayout from 'layouts/AdminLayout';
 import GuestLayout from 'layouts/GuestLayout';
+import AddUser from '../views/users/AddUser';
+import ListUsers from '../views/users/ListUsers';
 // import { useNavigate } from 'react-router-dom';
 // Lazy imports
 const DashboardSales = lazy(() => import('../views/dashboard/DashSales/index'));
@@ -77,6 +79,8 @@ const MainRoutes = {
         { path: 'dashboard/sales', element: <DashboardSales /> },
         { path: 'cars/add-cars', element: <AddCars /> },
         { path: 'cars/list-cars', element: <ListCars /> },
+        { path: 'users/add-user', element: <AddUser /> },
+        { path: 'users/list-users', element: <ListUsers  /> },
         { path: 'typography', element: <Typography /> },
         { path: 'color', element: <Color /> },
         { path: 'icons/feather', element: <FeatherIcon /> },

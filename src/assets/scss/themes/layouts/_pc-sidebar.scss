@@ -11,6 +11,16 @@
   bottom: 0;
   z-index: 1026;
 
+  a,
+  .nav-link {
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+      text-decoration: none;
+    }
+  }
+
   ul {
     list-style: none;
     padding-left: 0;
@@ -29,6 +39,7 @@
     padding: 15px 20px 10px;
     letter-spacing: 0.07em;
     text-transform: uppercase;
+
     font: {
       size: 11px;
       weight: 600;
@@ -41,10 +52,12 @@
     span:not(.badge) {
       display: block;
       color: #67758a;
+
       font: {
         size: 10px;
         weight: 500;
       }
+
       text-transform: capitalize;
     }
   }
@@ -68,7 +81,7 @@
       }
     }
 
-    > svg {
+    >svg {
       width: 18px;
       height: 18px;
       color: var(--pc-sidebar-icon-color);
@@ -80,6 +93,7 @@
     display: block;
     padding: 13px 20px;
     color: var(--pc-sidebar-color);
+
     font: {
       size: 13px;
       weight: 500;
@@ -92,6 +106,7 @@
       color: var(--pc-sidebar-active-color);
 
       .pc-micon {
+
         i,
         svg {
           color: var(--pc-sidebar-active-color);
@@ -105,7 +120,7 @@
     display: inline-block;
     transition: all 0.2s ease-in-out;
 
-    > svg {
+    >svg {
       width: 14px;
       height: 14px;
     }
@@ -141,11 +156,12 @@
 
   .pc-item {
     &.active {
-      > .pc-link {
+      >.pc-link {
         font-weight: 500;
         color: var(--pc-sidebar-main-active-color);
 
         .pc-micon {
+
           i,
           svg {
             color: var(--pc-sidebar-active-color);
@@ -155,7 +171,7 @@
 
       &:focus,
       &:hover {
-        > .pc-link {
+        >.pc-link {
           &:after {
             transform: translateX(5px);
           }
@@ -187,11 +203,12 @@
   }
 
   .pc-navbar {
-    > .pc-item {
+    >.pc-item {
+
       &.active,
       &:focus,
       &:hover {
-        > .pc-link {
+        >.pc-link {
           background: var(--pc-brand-background);
         }
       }
@@ -200,12 +217,12 @@
 
   .pc-hasmenu {
     &.pc-trigger {
-      > .pc-submenu {
+      >.pc-submenu {
         display: block;
       }
 
-      > .pc-link {
-        > .pc-arrow {
+      >.pc-link {
+        >.pc-arrow {
           transform: rotate(90deg);
         }
       }
@@ -249,14 +266,14 @@ body:not(.minimenu) {
       }
 
       .pc-submenu {
-        > .pc-item {
+        >.pc-item {
           &:before {
             left: 60px;
           }
         }
 
         .pc-submenu {
-          > .pc-item {
+          >.pc-item {
             &:before {
               left: 80px;
             }
@@ -281,8 +298,8 @@ body:not(.minimenu) {
   .pc-sidebar {
     width: $sidebar-collapsed-width;
 
-    .pc-hasmenu.pc-trigger:not(:hover) > .pc-submenu,
-    .pc-hasmenu:not(:hover) > .pc-submenu {
+    .pc-hasmenu.pc-trigger:not(:hover)>.pc-submenu,
+    .pc-hasmenu:not(:hover)>.pc-submenu {
       display: none;
     }
 
@@ -309,7 +326,7 @@ body:not(.minimenu) {
     .pc-badge,
     .pc-caption,
     .pc-mtext,
-    .pc-navbar > li > a > .pc-arrow {
+    .pc-navbar>li>a>.pc-arrow {
       display: none;
     }
 
@@ -317,8 +334,8 @@ body:not(.minimenu) {
       &.ps {
         overflow: visible !important;
 
-        > .ps__rail-X,
-        > .ps__rail-y {
+        >.ps__rail-X,
+        >.ps__rail-y {
           display: none;
         }
       }
@@ -343,7 +360,7 @@ body:not(.minimenu) {
       position: relative;
 
       &:hover {
-        > .pc-link {
+        >.pc-link {
           width: calc(200px + #{$sidebar-collapsed-width});
           background: var(--pc-brand-background);
           color: var(--pc-sidebar-active-color);
@@ -352,6 +369,7 @@ body:not(.minimenu) {
             i {
               color: #fff;
             }
+
             margin-right: 40px;
           }
 
@@ -360,7 +378,7 @@ body:not(.minimenu) {
           }
         }
 
-        > .pc-submenu {
+        >.pc-submenu {
           display: block;
           width: 200px;
         }
@@ -368,12 +386,12 @@ body:not(.minimenu) {
 
       .pc-item {
         &:hover {
-          > .pc-link {
+          >.pc-link {
             width: 200px;
             background: var(--pc-sidebar-background);
           }
 
-          > .pc-submenu {
+          >.pc-submenu {
             top: 0;
           }
         }
@@ -381,6 +399,7 @@ body:not(.minimenu) {
     }
   }
 }
+
 @media (min-width: 1025px) {
   .navbar-overlay {
     .pc-sidebar {
@@ -398,6 +417,7 @@ body:not(.minimenu) {
     }
   }
 }
+
 @media (max-width: 1024px) {
   .pc-sidebar {
     left: -#{$sidebar-width};
@@ -422,4 +442,5 @@ body:not(.minimenu) {
     }
   }
 }
+
 // Sidebar css end

@@ -53,6 +53,37 @@ const menuItems = {
         }
       ]
     },
+        {
+      id: 'Users',
+      title: 'Users',
+      type: 'group',
+      icon: 'material-icons-two-tone',
+      iconname: 'people', // 👥 Users icon
+      children: [
+        {
+          id: 'users',
+          title: 'Users',
+          type: 'collapse',
+          icon: 'material-icons-two-tone',
+          iconname: 'people', // 👥 Users icon
+          children: [
+            {
+              id: 'Add User',
+              title: 'Add User',
+              type: 'item',
+              url: '/users/add-user'
+            },
+            {
+              id: 'List Users',
+              title: 'List Users',
+              type: 'item',
+              url: '/users/list-users',
+            },
+          ]
+        },
+         
+      ]
+    },
     // {
     //   id: 'ui-element',
     //   title: 'ELEMENTS',

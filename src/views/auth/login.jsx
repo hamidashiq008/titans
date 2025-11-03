@@ -50,8 +50,10 @@ export default function SignIn1() {
           <Row className="align-items-center text-center">
             <Col>
               <Card.Body className="card-body">
-                <img src={logoDark} alt="" className="img-fluid mb-4" />
-                <h4 className="mb-3 f-w-400">Signin</h4>
+                {/* <img src={logoDark} alt="" className="img-fluid mb-4" /> */}
+                <h3 className="mb-3">Titans</h3>
+
+                <h5 className="mb-3 f-w-400">Signin</h5>
                 <InputGroup className="mb-3">
                   <InputGroup.Text>
                     <FeatherIcon icon="mail" />
@@ -70,7 +72,7 @@ export default function SignIn1() {
                 <Button className="btn btn-block btn-primary mb-4" onClick={handleLogin} disabled={loading}>
                   {loading ? 'Signing in…' : 'Signin'}
                 </Button>
-                <p className="mb-2 text-muted">
+                {/* <p className="mb-2 text-muted">
                   Forgot password?{' '}
                   <NavLink to="#" className="f-w-400">
                     Reset
@@ -81,7 +83,7 @@ export default function SignIn1() {
                   <NavLink to="/register" className="f-w-400">
                     Signup
                   </NavLink>
-                </p>
+                </p> */}
               </Card.Body>
             </Col>
           </Row>
