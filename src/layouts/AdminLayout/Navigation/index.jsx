@@ -7,6 +7,7 @@ import useWindowSize from 'hooks/useWindowSize';
 import navigation from 'menu-items';
 import navitemcollapse from 'menu-items-collapse';
 import * as actionType from 'store/actions';
+import useMenuItems from 'components/MenuItems';
 
 // assets
 import avatar2 from 'assets/images/user/avatar-2.jpg';
@@ -25,7 +26,9 @@ export default function Navigation() {
 
   let navClass = 'dark-sidebar';
 
-  let navContent = <NavContent navigation={collapseLayout ? navitemcollapse.items : navigation.items} />;
+  // Use the menu items from our custom hook
+  const menuItems = useMenuItems();
+  let navContent = <NavContent navigation={collapseLayout ? navitemcollapse.items : menuItems.items} />;
   navClass = [...navClass, 'pc-sidebar'];
   if (windowSize.width <= 1024 && collapseMenu) {
     navClass = [...navClass, 'mob-sidebar-active'];

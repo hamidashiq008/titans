@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'react-toastify'
 import axios from '../../axios/Axios'
 import { X, Droplet } from 'react-feather'
@@ -20,6 +20,23 @@ const AddCars = () => {
     const [imagePreviews, setImagePreviews] = useState([])
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [showColorPicker, setShowColorPicker] = useState(false)
+    const colorPickerRef = useRef(null)
+    const inputRef = useRef(null)
+
+    // Close color picker when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (colorPickerRef.current && !colorPickerRef.current.contains(event.target) && 
+                inputRef.current && !inputRef.current.contains(event.target)) {
+                setShowColorPicker(false)
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside)
+        }
+    }, [])
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target
@@ -181,23 +198,19 @@ setImagePreviews([])
                             {/* Color Picker */}
                             <div className="col-md-6 position-relative">
                                 <label className="form-label">Color</label>
-                                <div className="input-group">
+                                <div className="input-group" style={{ cursor: 'pointer' }}>
                                     <input
+                                        ref={inputRef}
                                         type="text"
                                         className="form-control"
-                                        placeholder="Select color"
+                                        placeholder="Click to select color"
                                         name="colour"
                                         value={formData.colour}
                                         onChange={handleChange}
                                         readOnly
+                                        onClick={() => setShowColorPicker(true)}
+                                        style={{ cursor: 'pointer' }}
                                     />
-                                    <button 
-                                        className="btn btn-outline-secondary" 
-                                        type="button"
-                                        onClick={() => setShowColorPicker(!showColorPicker)}
-                                    >
-                                        <Droplet size={16} />
-                                    </button>
                                     {formData.colour && (
                                         <div 
                                             className="color-preview" 
@@ -206,29 +219,31 @@ setImagePreviews([])
                                                 height: '44px', 
                                                 backgroundColor: formData.colour,
                                                 border: '1px solid #ced4da',
-                                                borderRadius: '0 4px 4px 0'
+                                                borderRadius: '0 4px 4px 0',
+                                                cursor: 'pointer'
                                             }}
+                                            onClick={() => setShowColorPicker(true)}
                                         />
                                     )}
                                 </div>
                                 {showColorPicker && (
-                                    <div className="position-absolute" style={{ zIndex: 1000, marginTop: '5px' }}>
+                                    <div 
+                                        ref={colorPickerRef}
+                                        className="position-absolute" 
+                                        style={{ zIndex: 1000, marginTop: '5px' }}
+                                    >
                                         <div className="position-relative">
-                                            <div 
-                                                className="position-absolute" 
-                                                style={{ top: 0, right: 0, zIndex: 1001 }}
-                                                onClick={() => setShowColorPicker(false)}
-                                            >
-                                                <X size={20} style={{ cursor: 'pointer', color: '#666' }} />
-                                            </div>
                                             <SketchPicker 
                                                 color={formData.colour || '#ffffff'}
-                                                onChangeComplete={(color) => {
+                                                onChange={(color) => {
                                                     const rgb = `rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b}${color.rgb.a !== 1 ? `, ${color.rgb.a}` : ''})`
                                                     setFormData(prev => ({
                                                         ...prev,
                                                         colour: rgb
                                                     }))
+                                                }}
+                                                onChangeComplete={() => {
+                                                    // Optional: Add any completion logic here if needed
                                                 }}
                                             />
                                         </div>
@@ -285,7 +300,7 @@ setImagePreviews([])
                                 />
                             </div>
 
-                            <div className="col-md-12 mb-3">
+                            <div className="col-md-12">
                                 <label className="form-label">Car Images</label>
                                 <input
                                     type="file"
@@ -317,7 +332,7 @@ setImagePreviews([])
                                 </div>
                             </div>
 
-                            <div className="col-md-6 d-flex align-items-start mt-5 pt-2">
+                            <div className="col-md-6 d-flex align-items-start mt-1 pt-2">
                                 <div className="form-check">
                                     <input
                                         className="form-check-input"

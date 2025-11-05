@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react'
+import { useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
 import axios from '../../axios/Axios'
 import { Modal, Carousel } from 'react-bootstrap'
 import 'bootstrap/dist/css/bootstrap.min.css'
 
 const ListCars = () => {
+    const { user } = useSelector((state) => state.auth);
+    const isSuperAdmin = user?.role === 'super-admin';
     const [cars, setCars] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -12,6 +15,7 @@ const ListCars = () => {
     const [editingCar, setEditingCar] = useState(null)
     const [showImageModal, setShowImageModal] = useState(false)
     const [currentCarImages, setCurrentCarImages] = useState([])
+    const [loadingImages, setLoadingImages] = useState({})
     const [editForm, setEditForm] = useState({
         name: '',
         source: '',
@@ -47,7 +51,7 @@ const ListCars = () => {
                     search
                 }
             })
-            
+
             if (Array.isArray(data)) {
                 // Handle array response (backward compatibility)
                 setCars(data)
@@ -107,14 +111,14 @@ const ListCars = () => {
 
     const handleEditChange = (e) => {
         const { name, value, type, checked, files } = e.target
-        
+
         if (type === 'file') {
             const newImages = Array.from(files).map(file => ({
                 file,
                 url: URL.createObjectURL(file),
                 id: Math.random().toString(36).substr(2, 9)
             }))
-            
+
             setEditForm(prev => ({
                 ...prev,
                 images: [...prev.images, ...newImages]
@@ -126,7 +130,7 @@ const ListCars = () => {
             }))
         }
     }
-    
+
     const removeEditImage = (id, isNew = true) => {
         if (isNew) {
             setEditForm(prev => ({
@@ -146,7 +150,7 @@ const ListCars = () => {
         editForm.images.forEach(image => {
             URL.revokeObjectURL(image.url)
         })
-        
+
         setShowModal(false)
         setEditingCar(null)
         setEditForm({
@@ -168,7 +172,7 @@ const ListCars = () => {
         try {
             setSaving(true)
             const formData = new FormData()
-            
+
             // Append all form data
             Object.entries(editForm).forEach(([key, value]) => {
                 if (key === 'images' || key === 'existingImages') return
@@ -179,23 +183,23 @@ const ListCars = () => {
                     formData.append(key, value)
                 }
             })
-            
+
             // Append new images
             editForm.images.forEach((image, index) => {
                 formData.append(`images[${index}]`, image.file)
             })
-            
+
             // Append existing image IDs that weren't removed
             editForm.existingImages.forEach(image => {
                 if (image.id) {
                     formData.append('existing_image_ids[]', image.id)
                 }
             })
-            
+
             const response = await axios.post(`/cars/${editingCar.id}?_method=PUT`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             })
-            
+
             // Update the cars list with the new data
             setCars(cars.map(car => {
                 if (car.id === editingCar.id) {
@@ -242,6 +246,33 @@ const ListCars = () => {
             setDeleting(false)
         }
     }
+
+    const handleViewImages = (car) => {
+        const urls = car.image_urls || (car.images?.[0]?.image_urls) || [];
+        const images = Array.isArray(urls) ? urls.map(url => ({ url })) : [];
+        setCurrentCarImages(images);
+        // Initialize loading state for all images
+        const initialLoadingState = {};
+        images.forEach((_, index) => {
+            initialLoadingState[index] = true;
+        });
+        setLoadingImages(initialLoadingState);
+        setShowImageModal(true);
+    };
+
+    const handleImageLoad = (index) => {
+        setLoadingImages(prev => ({
+            ...prev,
+            [index]: false
+        }));
+    };
+
+    const handleImageModalClose = () => {
+        setShowImageModal(false)
+        setCurrentCarImages([])
+        setLoadingImages({})
+    }
+
     return (
         <>
             <div className="container py-4">
@@ -309,21 +340,13 @@ const ListCars = () => {
                                                 <button
                                                     type="button"
                                                     className="btn bg-secondary text-white me-2"
-                                                    disabled={!car.images?.[0]?.image_urls?.length }
-                                                    onClick={() => {
-                                                        // Handle both direct image_urls and images[0].image_urls
-                                                        const urls = car.image_urls || (car.images?.[0]?.image_urls) || [];
-                                                        const images = Array.isArray(urls) ? urls.map(url => ({ url })) : [];
-                                                        setCurrentCarImages(images);
-                                                        setShowImageModal(true);
-                                                        console.log('Images:', images); // Debug log
-                                                    }}
+                                                    disabled={!car.images?.[0]?.image_urls?.length}
+                                                    onClick={() => handleViewImages(car)}
                                                     aria-label="View Images"
                                                 >
-                                                    {Array.isArray(car.image_urls || car.images?.[0]?.image_urls) ?
-                                                        (car.image_urls?.length || car.images?.[0]?.image_urls?.length || 0) : '' }
-                                                        
-                                                     image{(car.image_urls?.length || car.images?.[0]?.image_urls?.length || 0) !== 1 ? 's' : ''}
+
+
+                                                    images
                                                 </button>
                                             </td>
                                             <td>{car.name}</td>
@@ -348,19 +371,29 @@ const ListCars = () => {
                                             </td>
                                             <td>{car.rent_period}</td>
                                             <td>Rs. {car.rent_price}</td>
-                                            <td>
-                                                <button type="button" className="btn btn-sm btn-link text-primary me-2" onClick={() => handleEdit(car)} aria-label="Edit">
+
+                                            {isSuperAdmin ? (
+                                                <td>
+                                                    <button type="button" className="btn btn-sm btn-link text-primary me-2" onClick={() => handleEdit(car)} aria-label="Edit">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                                                            <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-9.5 9.5a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l9.5-9.5zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.293l6.5-6.5z" />
+                                                        </svg>
+                                                    </button>
+                                                    <button type="button" className="btn btn-sm btn-link text-danger" onClick={() => askDelete(car)} aria-label="Delete">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                                                            <path d="M5.5 5.5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5zm3 0a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5z" />
+                                                            <path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" />
+                                                        </svg>
+                                                    </button>
+                                                </td>
+                                            ) : <td>
+                                                <button type="button" className="btn btn-sm btn-link text-primary" onClick={() => handleEdit(car)} aria-label="View">
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                                                        <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-9.5 9.5a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l9.5-9.5zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.293l6.5-6.5z" />
+                                                        <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z" />
+                                                        <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z" />
                                                     </svg>
                                                 </button>
-                                                <button type="button" className="btn btn-sm btn-link text-danger" onClick={() => askDelete(car)} aria-label="Delete">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                                                        <path d="M5.5 5.5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5zm3 0a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5z" />
-                                                        <path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" />
-                                                    </svg>
-                                                </button>
-                                            </td>
+                                            </td>}
                                         </tr>
                                     ))
                                 })()}
@@ -374,29 +407,29 @@ const ListCars = () => {
                                 <nav aria-label="Page navigation">
                                     <ul className="pagination mb-0">
                                         <li className={`page-item ${pagination.currentPage === 1 ? 'disabled' : ''}`}>
-                                            <button 
-                                                className="page-link" 
+                                            <button
+                                                className="page-link"
                                                 onClick={() => handlePageChange(pagination.currentPage - 1)}
                                                 disabled={pagination.currentPage === 1}
                                             >
                                                 Previous
                                             </button>
                                         </li>
-                                        
+
                                         {/* Show first page */}
                                         {pagination.currentPage > 2 && (
                                             <li className="page-item">
                                                 <button className="page-link" onClick={() => handlePageChange(1)}>1</button>
                                             </li>
                                         )}
-                                        
+
                                         {/* Show ellipsis if needed */}
                                         {pagination.currentPage > 3 && (
                                             <li className="page-item disabled">
                                                 <span className="page-link">...</span>
                                             </li>
                                         )}
-                                        
+
                                         {/* Show previous page */}
                                         {pagination.currentPage > 1 && (
                                             <li className="page-item">
@@ -405,14 +438,14 @@ const ListCars = () => {
                                                 </button>
                                             </li>
                                         )}
-                                        
+
                                         {/* Current page */}
                                         <li className="page-item active">
                                             <span className="page-link">
                                                 {pagination.currentPage}
                                             </span>
                                         </li>
-                                        
+
                                         {/* Show next page */}
                                         {pagination.currentPage < pagination.lastPage && (
                                             <li className="page-item">
@@ -421,14 +454,14 @@ const ListCars = () => {
                                                 </button>
                                             </li>
                                         )}
-                                        
+
                                         {/* Show ellipsis if needed */}
                                         {pagination.currentPage < pagination.lastPage - 2 && (
                                             <li className="page-item disabled">
                                                 <span className="page-link">...</span>
                                             </li>
                                         )}
-                                        
+
                                         {/* Show last page */}
                                         {pagination.currentPage < pagination.lastPage - 1 && (
                                             <li className="page-item">
@@ -437,10 +470,10 @@ const ListCars = () => {
                                                 </button>
                                             </li>
                                         )}
-                                        
+
                                         <li className={`page-item ${pagination.currentPage === pagination.lastPage ? 'disabled' : ''}`}>
-                                            <button 
-                                                className="page-link" 
+                                            <button
+                                                className="page-link"
                                                 onClick={() => handlePageChange(pagination.currentPage + 1)}
                                                 disabled={pagination.currentPage === pagination.lastPage}
                                             >
@@ -463,11 +496,11 @@ const ListCars = () => {
                                     <div className="row g-3">
                                         <div className="col-md-6">
                                             <label className="form-label">Car Name</label>
-                                            <input type="text" className="form-control" name="name" value={editForm.name} onChange={handleEditChange} />
+                                            <input type="text" className="form-control" name="name" disabled={!isSuperAdmin} value={editForm.name} onChange={handleEditChange} />
                                         </div>
                                         <div className="col-md-6">
                                             <label className="form-label">Source</label>
-                                            <select className="form-select" name="source" value={editForm.source} onChange={handleEditChange}>
+                                            <select className="form-select" name="source" disabled={!isSuperAdmin} value={editForm.source} onChange={handleEditChange}>
                                                 <option value="">Select source</option>
                                                 <option value="showroom">Showroom</option>
                                                 <option value="private">Private</option>
@@ -476,19 +509,19 @@ const ListCars = () => {
                                         </div>
                                         <div className="col-md-6">
                                             <label className="form-label">Model</label>
-                                            <input type="text" className="form-control" name="model" value={editForm.model} onChange={handleEditChange} />
+                                            <input type="text" className="form-control" name="model" disabled={!isSuperAdmin} value={editForm.model} onChange={handleEditChange} />
                                         </div>
                                         <div className="col-md-6">
                                             <label className="form-label">Colour</label>
-                                            <input type="text" className="form-control" name="colour" value={editForm.colour} onChange={handleEditChange} />
+                                            <input type="text" className="form-control" name="colour" disabled={!isSuperAdmin} value={editForm.colour} onChange={handleEditChange} />
                                         </div>
                                         <div className="col-md-6">
                                             <label className="form-label">Chassis Number</label>
-                                            <input type="text" className="form-control" name="chasis_number" value={editForm.chasis_number} onChange={handleEditChange} />
+                                            <input type="text" className="form-control" name="chasis_number" disabled={!isSuperAdmin} value={editForm.chasis_number} onChange={handleEditChange} />
                                         </div>
                                         <div className="col-md-6">
                                             <label className="form-label">Car Status</label>
-                                            <select className="form-select" name="status" value={editForm.status} onChange={handleEditChange}>
+                                            <select className="form-select" name="status" disabled={!isSuperAdmin} value={editForm.status} onChange={handleEditChange}>
                                                 <option value="">Select status</option>
                                                 <option value="available">Available</option>
                                                 <option value="rented">Rented</option>
@@ -497,7 +530,7 @@ const ListCars = () => {
                                         </div>
                                         <div className="col-md-6">
                                             <label className="form-label">Rent Type</label>
-                                            <select className="form-select" name="rent_period" value={editForm.rent_period} onChange={handleEditChange}>
+                                            <select className="form-select" name="rent_period" disabled={!isSuperAdmin} value={editForm.rent_period} onChange={handleEditChange}>
                                                 <option value="">Select rent duration</option>
                                                 <option value="monthly">Monthly</option>
                                                 <option value="15days">15 Days</option>
@@ -507,77 +540,87 @@ const ListCars = () => {
                                         </div>
                                         <div className="col-md-6">
                                             <label className="form-label">Rent Price</label>
-                                            <input type="number" className="form-control" name="rent_price" value={editForm.rent_price} onChange={handleEditChange} />
+                                            <input type="number" className="form-control" name="rent_price" disabled={!isSuperAdmin} value={editForm.rent_price} onChange={handleEditChange} />
                                         </div>
                                         <div className="col-12">
                                             <label className="form-label">Images</label>
-                                            <input 
-                                                type="file" 
-                                                className="form-control mb-3" 
-                                                multiple 
-                                                accept="image/*" 
+                                            <input
+                                                type="file"
+                                                className="form-control mb-3"
+                                                multiple
+                                                accept="image/*"
                                                 onChange={handleEditChange}
                                                 name="images"
+                                                disabled={!isSuperAdmin}
                                             />
-                                            
+
                                             {/* Existing Images */}
                                             <div className="d-flex flex-wrap gap-3 mb-3">
                                                 {editForm.existingImages.map((image, index) => (
                                                     <div key={`existing-${image.id}`} className="position-relative" style={{ width: '150px', height: '100px' }}>
-                                                        <img 
-                                                            src={image.url} 
+                                                        <img
+                                                            src={image.url}
                                                             alt={`Car image ${index + 1}`}
                                                             className="img-fluid rounded border"
                                                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                                         />
-                                                        <button 
-                                                            type="button"
-                                                            className="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 p-1 rounded-circle"
-                                                            onClick={() => removeEditImage(image.id, false)}
-                                                            style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                                        >
-                                                            ×
-                                                        </button>
+                                                        {
+                                                            isSuperAdmin ? (
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 p-1 rounded-circle"
+                                                                    onClick={() => removeEditImage(image.id, false)}
+                                                                    style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                                >
+                                                                    ×
+                                                                </button>
+                                                            ) : null
+                                                        }
                                                     </div>
                                                 ))}
                                             </div>
-                                            
+
                                             {/* Newly Added Images */}
                                             <div className="d-flex flex-wrap gap-3">
                                                 {editForm.images.map((image, index) => (
                                                     <div key={`new-${image.id}`} className="position-relative" style={{ width: '150px', height: '100px' }}>
-                                                        <img 
-                                                            src={image.url} 
+                                                        <img
+                                                            src={image.url}
                                                             alt={`New image ${index + 1}`}
                                                             className="img-fluid rounded border"
                                                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                                         />
-                                                        <button 
-                                                            type="button"
-                                                            className="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 p-1 rounded-circle"
-                                                            onClick={() => removeEditImage(image.id, true)}
-                                                            style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                                        >
-                                                            ×
-                                                        </button>
+                                                        {
+                                                            isSuperAdmin ? (
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 p-1 rounded-circle"
+                                                                    onClick={() => removeEditImage(image.id, true)}
+                                                                    style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                                >
+                                                                    ×
+                                                                </button>
+                                                            ) : null}
                                                     </div>
                                                 ))}
                                             </div>
                                         </div>
-                                        
+
                                         <div className="col-md-6 d-flex align-items-end">
                                             <div className="form-check">
-                                                <input className="form-check-input" type="checkbox" id="edit_available_for_sale" name="available_for_sale" checked={editForm.available_for_sale} onChange={handleEditChange} />
+                                                <input className="form-check-input" type="checkbox" disabled={!isSuperAdmin} id="edit_available_for_sale" name="available_for_sale" checked={editForm.available_for_sale} onChange={handleEditChange} />
                                                 <label className="form-check-label" htmlFor="edit_available_for_sale">Available for sale</label>
                                             </div>
                                         </div>
-                                        <div className="col-12 d-flex justify-content-end gap-2 mt-2">
-                                            <button type="button" className="btn btn-secondary" onClick={closeModal} disabled={saving}>Cancel</button>
-                                            <button type="button" className="btn btn-primary" onClick={saveEdit} disabled={saving}>
-                                                {saving && <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>}
-                                                Save Changes
-                                            </button>
-                                        </div>
+                                        {isSuperAdmin && (
+                                            <div className="col-12 d-flex justify-content-end gap-2 mt-2">
+                                                <button type="button" className="btn btn-secondary" onClick={closeModal} disabled={saving}>Cancel</button>
+                                                <button type="button" className="btn btn-primary" onClick={saveEdit} disabled={saving}>
+                                                    {saving && <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>}
+                                                    Save Changes
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -606,7 +649,7 @@ const ListCars = () => {
             {/* Image Slider Modal */}
             <Modal
                 show={showImageModal}
-                onHide={() => setShowImageModal(false)}
+                onHide={handleImageModalClose}
                 size="lg"
                 centered
             >
@@ -616,21 +659,28 @@ const ListCars = () => {
                 <Modal.Body>
                     {currentCarImages.length > 0 ? (
                         <Carousel>
-                            {currentCarImages.map((image, idx) => (
+                            {currentCarImages.map((img, idx) => (
                                 <Carousel.Item key={idx}>
-                                    <div className="d-flex justify-content-center align-items-center" style={{ height: '400px', backgroundColor: '#f8f9fa' }}>
+                                    <div className="position-relative" style={{ minHeight: '300px' }}>
+                                        {loadingImages[idx] && (
+                                            <div className="position-absolute top-50 start-50 translate-middle">
+                                                <div className="spinner-border text-primary" role="status">
+                                                    <span className="visually-hidden">Loading...</span>
+                                                </div>
+                                            </div>
+                                        )}
                                         <img
-                                            className="img-fluid mx-auto d-block"
-                                            src={typeof image === 'string' ? image : image.url}
-                                            alt={`Car image ${idx + 1}`}
-                                            style={{ 
-                                                maxHeight: '100%', 
-                                                maxWidth: '100%',
+                                            className="d-block w-100"
+                                            src={img.url}
+                                            alt={`Car view ${idx + 1}`}
+                                            style={{
+                                                maxHeight: '500px',
                                                 objectFit: 'contain',
-                                                width: 'auto',
-                                                height: 'auto',
-                                                margin: '0 auto'
+                                                opacity: loadingImages[idx] ? 0 : 1,
+                                                transition: 'opacity 0.3s ease-in-out'
                                             }}
+                                            onLoad={() => handleImageLoad(idx)}
+                                            onError={() => handleImageLoad(idx)}
                                         />
                                     </div>
                                     <Carousel.Caption>

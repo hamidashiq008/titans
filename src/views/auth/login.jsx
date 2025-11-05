@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import React from 'react';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom'; 
+import { useDispatch, useSelector } from 'react-redux';
+import { login } from '../../redux/slices/AuthSlice';
 import { NavLink } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
 // react-bootstrap
 import { Card, Row, Col, Button, Form, InputGroup } from 'react-bootstrap';
 
@@ -18,29 +21,22 @@ export default function SignIn1() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const [loginData, setLoginData] = useState('');
+  const dispatch = useDispatch();
+  const { loading, error } = useSelector((state) => state.auth);
   const navigate = useNavigate();
 
   const handleLogin = async () => {
     if (loading) return;
-    setLoading(true);
-    try {
-      const res = await axios.post('/auth/login', {
-        email,
-        password
-      });
-      setLoginData(res.data);
-      console.log('res', res);
-      localStorage.setItem('access_token', res.data.access_token);
-      toast.success('Logged in successfully');
-      navigate('/dashboard/sales');
 
-    } catch (e) {
-      console.error(e);
-      toast.error(e?.response?.data?.message || 'Login failed');
-    } finally {
-      setLoading(false);
+    const resultAction = await dispatch(login({ email, password }));
+
+    if (login.fulfilled.match(resultAction)) {
+      const user = resultAction.payload;
+      if (user?.roles?.some(role => role.name === 'super-admin')) {
+        navigate('/dashboard/sales');
+      } else {
+        navigate('/cars/list-cars');
+      }
     }
   };
   return (

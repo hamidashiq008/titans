@@ -1,7 +1,20 @@
-// Menu configuration for default layout
+// Get user role from localStorage or your auth state
+const getUserRole = () => {
+  try {
+    const user = JSON.parse(localStorage.getItem('user')) || {};
+    return user.roles?.[0]?.name || '';
+  } catch (e) {
+    return '';
+  }
+};
+
+const isSuperAdmin = getUserRole() === 'super-admin';
+
+// Menu configuration is now handled by the useMenuItems hook
+// This is now just a fallback/static version
 const menuItems = {
   items: [
-    {
+    ...(isSuperAdmin ? [{
       id: 'navigation',
       title: 'Navigation',
       type: 'group',
@@ -23,7 +36,7 @@ const menuItems = {
           ]
         }
       ]
-    },
+    }] : []),
     {
       id: 'car',
       title: 'Cars',

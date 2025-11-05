@@ -14,7 +14,7 @@ import avatar2 from 'assets/images/user/avatar-2.jpg';
 export default function NavRight() {
   return (
     <ListGroup as="ul" bsPrefix=" " className="list-unstyled">
-      <ListGroup.Item as="li" bsPrefix=" " className="pc-h-item">
+      {/* <ListGroup.Item as="li" bsPrefix=" " className="pc-h-item">
         <Dropdown>
           <Dropdown.Toggle as="a" variant="link" className="pc-head-link arrow-none me-0">
             <i className="material-icons-two-tone">search</i>
@@ -28,7 +28,7 @@ export default function NavRight() {
             </Form>
           </Dropdown.Menu>
         </Dropdown>
-      </ListGroup.Item>
+      </ListGroup.Item> */}
       <ListGroup.Item as="li" bsPrefix=" " className="pc-h-item">
         <Dropdown className="drp-user">
           <Dropdown.Toggle as="a" variant="link" className="pc-head-link arrow-none me-0 user-name">
