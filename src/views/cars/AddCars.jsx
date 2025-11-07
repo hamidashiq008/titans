@@ -3,8 +3,9 @@ import { toast } from 'react-toastify'
 import axios from '../../axios/Axios'
 import { X, Droplet } from 'react-feather'
 import { SketchPicker } from 'react-color'
-
+import { useNavigate } from 'react-router-dom'
 const AddCars = () => {
+    const navigate = useNavigate()
     const [formData, setFormData] = useState({
         name: '',
         source: '',
@@ -26,7 +27,7 @@ const AddCars = () => {
     // Close color picker when clicking outside
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (colorPickerRef.current && !colorPickerRef.current.contains(event.target) && 
+            if (colorPickerRef.current && !colorPickerRef.current.contains(event.target) &&
                 inputRef.current && !inputRef.current.contains(event.target)) {
                 setShowColorPicker(false)
             }
@@ -92,10 +93,10 @@ const AddCars = () => {
         e.preventDefault()
         if (isSubmitting) return
         setIsSubmitting(true)
-        
+
         try {
             const fd = new FormData()
-            
+
             // Add all form data
             const formDataToSend = {
                 name: formData.name,
@@ -108,14 +109,14 @@ const AddCars = () => {
                 rent_price: Number(formData.rent_price),
                 available_for_sale: formData.available_for_sale ? 1 : 0,
             }
-            
+
             // Append all form data to FormData
             Object.entries(formDataToSend).forEach(([key, value]) => {
                 if (value !== null && value !== undefined) {
                     fd.append(key, String(value))
                 }
             })
-            
+
             // Append each image file
             formData.images.forEach((image, index) => {
                 // Only append if the image is a File object
@@ -123,7 +124,7 @@ const AddCars = () => {
                     fd.append(`images[${index}]`, image)
                 }
             })
-            
+
             const response = await axios.post('/cars', fd, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             })
@@ -142,7 +143,8 @@ const AddCars = () => {
                 available_for_sale: false,
                 images: []
             })
-setImagePreviews([])
+            setImagePreviews([])
+            navigate('/cars/list-cars')
         } catch (error) {
             const msg = error?.response?.data?.message || error.message || 'Failed to add car'
             console.error(error)
@@ -212,11 +214,11 @@ setImagePreviews([])
                                         style={{ cursor: 'pointer' }}
                                     />
                                     {formData.colour && (
-                                        <div 
-                                            className="color-preview" 
+                                        <div
+                                            className="color-preview"
                                             style={{
-                                                width: '38px', 
-                                                height: '44px', 
+                                                width: '38px',
+                                                height: '44px',
                                                 backgroundColor: formData.colour,
                                                 border: '1px solid #ced4da',
                                                 borderRadius: '0 4px 4px 0',
@@ -227,13 +229,13 @@ setImagePreviews([])
                                     )}
                                 </div>
                                 {showColorPicker && (
-                                    <div 
+                                    <div
                                         ref={colorPickerRef}
-                                        className="position-absolute" 
+                                        className="position-absolute"
                                         style={{ zIndex: 1000, marginTop: '5px' }}
                                     >
                                         <div className="position-relative">
-                                            <SketchPicker 
+                                            <SketchPicker
                                                 color={formData.colour || '#ffffff'}
                                                 onChange={(color) => {
                                                     const rgb = `rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b}${color.rgb.a !== 1 ? `, ${color.rgb.a}` : ''})`
@@ -281,7 +283,7 @@ setImagePreviews([])
                                 <select className="form-select" name="rent_period" value={formData.rent_period} onChange={handleChange}>
                                     <option value="">Select rent duration</option>
                                     <option value="monthly">Monthly</option>
-                                    <option value="15days">15 Days</option>
+                                    <option value="15_days">15 Days</option>
                                     <option value="weekly">Weekly</option>
                                     <option value="daily">Daily</option>
                                 </select>

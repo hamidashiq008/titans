@@ -46,7 +46,7 @@ export default function NavContent({ navigation, activeNav }) {
       <ListGroup variant="flush" as="ul" bsPrefix=" " className="pc-navbar">
         {navItems}
       </ListGroup>
-  
+
     </SimpleBar>
   );
 
@@ -57,12 +57,13 @@ export default function NavContent({ navigation, activeNav }) {
       </ListGroup>
     );
   }
-
+  //  Sidebar logo
   const mHeader = (
     <div className="m-header">
-      <Link to="/dashboard/sales" className="b-brand">
+      {/* <Link to="/dashboard/sales" className="b-brand">
         <img src={logo} alt="" className="logo logo-lg" />
-      </Link>
+      </Link> */}
+      <h2 className='text-white mx-auto my-0'>Titan Cars</h2>
     </div>
   );
 

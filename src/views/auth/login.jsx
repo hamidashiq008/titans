@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; 
+import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { login } from '../../redux/slices/AuthSlice';
 import { NavLink } from 'react-router-dom';
@@ -32,7 +32,7 @@ export default function SignIn1() {
 
     if (login.fulfilled.match(resultAction)) {
       const user = resultAction.payload;
-      if (user?.roles?.some(role => role.name === 'super-admin')) {
+      if (user?.roles === 'super-admin') {
         navigate('/dashboard/sales');
       } else {
         navigate('/cars/list-cars');
@@ -45,10 +45,8 @@ export default function SignIn1() {
         <Card className="borderless">
           <Row className="align-items-center text-center">
             <Col>
-              <Card.Body className="card-body">
-                {/* <img src={logoDark} alt="" className="img-fluid mb-4" /> */}
-                <h3 className="mb-3">Titans</h3>
-
+              <Card.Body className="card-body"> 
+                <h3 className="mb-3">Titans</h3> 
                 <h5 className="mb-3 f-w-400">Signin</h5>
                 <InputGroup className="mb-3">
                   <InputGroup.Text>
@@ -67,19 +65,7 @@ export default function SignIn1() {
                 </Form.Group>
                 <Button className="btn btn-block btn-primary mb-4" onClick={handleLogin} disabled={loading}>
                   {loading ? 'Signing in…' : 'Signin'}
-                </Button>
-                {/* <p className="mb-2 text-muted">
-                  Forgot password?{' '}
-                  <NavLink to="#" className="f-w-400">
-                    Reset
-                  </NavLink>
-                </p>
-                <p className="mb-0 text-muted">
-                  Don’t have an account?{' '}
-                  <NavLink to="/register" className="f-w-400">
-                    Signup
-                  </NavLink>
-                </p> */}
+                </Button> 
               </Card.Body>
             </Col>
           </Row>

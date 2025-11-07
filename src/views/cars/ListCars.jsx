@@ -1,13 +1,16 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
 import axios from '../../axios/Axios'
 import { Modal, Carousel } from 'react-bootstrap'
 import 'bootstrap/dist/css/bootstrap.min.css'
+import { SketchPicker } from 'react-color'
+import { useNavigate } from 'react-router-dom'
 
 const ListCars = () => {
     const { user } = useSelector((state) => state.auth);
     const isSuperAdmin = user?.role === 'super-admin';
+    const navigate = useNavigate();
     const [cars, setCars] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -40,6 +43,10 @@ const ListCars = () => {
         total: 0,
         lastPage: 1
     })
+    // Color picker state for Edit modal
+    const [showColorPickerEdit, setShowColorPickerEdit] = useState(false)
+    const colorPickerRefEdit = useRef(null)
+    const inputRefEdit = useRef(null)
 
     const fetchCars = async (page = 1, search = '') => {
         try {
@@ -83,30 +90,34 @@ const ListCars = () => {
         fetchCars(1, searchTerm)
     }, [searchTerm])
 
+    // Close color picker when clicking outside in Edit modal
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                colorPickerRefEdit.current &&
+                !colorPickerRefEdit.current.contains(event.target) &&
+                inputRefEdit.current &&
+                !inputRefEdit.current.contains(event.target)
+            ) {
+                setShowColorPickerEdit(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
     const handlePageChange = (page) => {
         fetchCars(page, searchTerm)
     }
 
     const handleEdit = (car) => {
-        setEditingCar(car)
-        const urls = car.image_urls || (car.images?.[0]?.image_urls) || []
-        setEditForm({
-            name: car.name || '',
-            source: car.source || '',
-            model: car.model || '',
-            colour: car.colour || '',
-            chasis_number: car.chasis_number || '',
-            status: car.status || '',
-            rent_period: car.rent_period || '',
-            rent_price: car.rent_price || '',
-            available_for_sale: car.available_for_sale || false,
-            images: [],
-            existingImages: Array.isArray(urls) ? urls.map(url => ({
-                url: typeof url === 'string' ? url : url.url,
-                id: Math.random().toString(36).substr(2, 9)
-            })) : []
-        })
-        setShowModal(true)
+        if (!car?.id) return;
+        navigate(`/cars/edit/${car.id}`, { state: { car } });
+    }
+
+    const handleView = (car) => {
+        if (!car?.id) return;
+        navigate(`/cars/view/${car.id}`, { state: { car } });
     }
 
     const handleEditChange = (e) => {
@@ -292,19 +303,19 @@ const ListCars = () => {
                             </div>
                         </div>
                     </div>
-                    {loading && <div className="text-center py-3">Loading…</div>}
+                    {/* {loading && <div className="text-center py-3">Loading…</div>} */}
                     {error && <div className="alert alert-danger" role="alert">{error}</div>}
                     <div className="table-responsive">
                         <table className="table table-bordered table-striped align-middle">
                             <thead className="table-dark">
                                 <tr>
-                                    <th>#</th>
-                                    <th>Car Preview</th>
-                                    <th>Car Name</th>
+                                    {/* <th>#</th> */}
+                                    <th>Preview</th>
+                                    <th>Name</th>
                                     <th>Source</th>
                                     <th>Model</th>
                                     <th>Colour</th>
-                                    <th>Chasis No</th>
+                                    <th>Chassis No</th>
                                     <th>Status</th>
                                     <th>Rent Type</th>
                                     <th>Rent Price</th>
@@ -335,7 +346,7 @@ const ListCars = () => {
                                     console.log('List:', list); // Debug log
                                     return list.map((car, index) => (
                                         <tr key={car.id}>
-                                            <td>{index + 1}</td>
+                                            {/* <td>{index + 1}</td> */}
                                             <td>
                                                 <button
                                                     type="button"
@@ -369,11 +380,18 @@ const ListCars = () => {
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td>{car.rent_period}</td>
-                                            <td>Rs. {car.rent_price}</td>
+                                       <td>{car.rent_period.replaceAll('_', ' ')}</td>
+
+                                            <td>${car.rent_price}</td>
 
                                             {isSuperAdmin ? (
                                                 <td>
+                                                    <button type="button" className="btn btn-sm btn-link text-primary" onClick={() => handleView(car)} aria-label="View">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                                                            <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z" />
+                                                            <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z" />
+                                                        </svg>
+                                                    </button>
                                                     <button type="button" className="btn btn-sm btn-link text-primary me-2" onClick={() => handleEdit(car)} aria-label="Edit">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
                                                             <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-9.5 9.5a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l9.5-9.5zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.293l6.5-6.5z" />
@@ -387,7 +405,7 @@ const ListCars = () => {
                                                     </button>
                                                 </td>
                                             ) : <td>
-                                                <button type="button" className="btn btn-sm btn-link text-primary" onClick={() => handleEdit(car)} aria-label="View">
+                                                <button type="button" className="btn btn-sm btn-link text-primary" onClick={() => handleView(car)} aria-label="View">
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
                                                         <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z" />
                                                         <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z" />
@@ -491,16 +509,16 @@ const ListCars = () => {
                                 <div className="bg-white rounded shadow p-3" style={{ width: '100%', maxWidth: 720 }}>
                                     <div className="d-flex justify-content-between align-items-center mb-3">
                                         <h5 className="m-0">Edit Car</h5>
-                                        <button type="button" className="btn btn-sm btn-outline-secondary" onClick={closeModal}>Close</button>
+                                        {/* <button type="button" className="btn btn-sm btn-outline-secondary" onClick={closeModal}>Close</button> */}
                                     </div>
                                     <div className="row g-3">
                                         <div className="col-md-6">
                                             <label className="form-label">Car Name</label>
-                                            <input type="text" className="form-control" name="name" disabled={!isSuperAdmin} value={editForm.name} onChange={handleEditChange} />
+                                            <input type="text" className="form-control" name="name" value={editForm.name} onChange={handleEditChange} />
                                         </div>
                                         <div className="col-md-6">
                                             <label className="form-label">Source</label>
-                                            <select className="form-select" name="source" disabled={!isSuperAdmin} value={editForm.source} onChange={handleEditChange}>
+                                            <select className="form-select" name="source" value={editForm.source} onChange={handleEditChange}>
                                                 <option value="">Select source</option>
                                                 <option value="showroom">Showroom</option>
                                                 <option value="private">Private</option>
@@ -509,19 +527,46 @@ const ListCars = () => {
                                         </div>
                                         <div className="col-md-6">
                                             <label className="form-label">Model</label>
-                                            <input type="text" className="form-control" name="model" disabled={!isSuperAdmin} value={editForm.model} onChange={handleEditChange} />
+                                            <input type="text" className="form-control" name="model" value={editForm.model} onChange={handleEditChange} />
                                         </div>
-                                        <div className="col-md-6">
+                                        <div className="col-md-6 position-relative">
                                             <label className="form-label">Colour</label>
-                                            <input type="text" className="form-control" name="colour" disabled={!isSuperAdmin} value={editForm.colour} onChange={handleEditChange} />
+                                            <div className="d-flex">
+                                                <input
+                                                    ref={inputRefEdit}
+                                                    type="text"
+                                                    className="form-control"
+                                                    name="colour"
+                                                    disabled={!isSuperAdmin}
+                                                    value={editForm.colour || ''}
+                                                    onFocus={() => setShowColorPickerEdit(true)}
+                                                    onChange={handleEditChange}
+                                                    placeholder="Click to pick color"
+                                                />
+                                                <div
+                                                    className="border rounded"
+                                                    style={{ width: 40, height: 43, backgroundColor: editForm.colour || '#ffffff' }}
+                                                />
+                                            </div>
+                                            {showColorPickerEdit && (
+                                                <div ref={colorPickerRefEdit} className="position-absolute" style={{ zIndex: 1000, marginTop: 8 }}>
+                                                    <SketchPicker
+                                                        color={editForm.colour || '#ffffff'}
+                                                        onChange={(color) => {
+                                                            const rgb = `rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b}${color.rgb.a !== 1 ? `, ${color.rgb.a}` : ''})`
+                                                            setEditForm((prev) => ({ ...prev, colour: rgb }))
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="col-md-6">
                                             <label className="form-label">Chassis Number</label>
-                                            <input type="text" className="form-control" name="chasis_number" disabled={!isSuperAdmin} value={editForm.chasis_number} onChange={handleEditChange} />
+                                            <input type="text" className="form-control" name="chasis_number" value={editForm.chasis_number} onChange={handleEditChange} />
                                         </div>
                                         <div className="col-md-6">
                                             <label className="form-label">Car Status</label>
-                                            <select className="form-select" name="status" disabled={!isSuperAdmin} value={editForm.status} onChange={handleEditChange}>
+                                            <select className="form-select" name="status" value={editForm.status} onChange={handleEditChange}>
                                                 <option value="">Select status</option>
                                                 <option value="available">Available</option>
                                                 <option value="rented">Rented</option>
@@ -530,17 +575,17 @@ const ListCars = () => {
                                         </div>
                                         <div className="col-md-6">
                                             <label className="form-label">Rent Type</label>
-                                            <select className="form-select" name="rent_period" disabled={!isSuperAdmin} value={editForm.rent_period} onChange={handleEditChange}>
+                                            <select className="form-select" name="rent_period" value={editForm.rent_period} onChange={handleEditChange}>
                                                 <option value="">Select rent duration</option>
                                                 <option value="monthly">Monthly</option>
-                                                <option value="15days">15 Days</option>
+                                                <option value="15_days">15 Days</option>
                                                 <option value="weekly">Weekly</option>
                                                 <option value="daily">Daily</option>
                                             </select>
                                         </div>
                                         <div className="col-md-6">
                                             <label className="form-label">Rent Price</label>
-                                            <input type="number" className="form-control" name="rent_price" disabled={!isSuperAdmin} value={editForm.rent_price} onChange={handleEditChange} />
+                                            <input type="number" className="form-control" name="rent_price" value={editForm?.rent_price} onChange={handleEditChange} />
                                         </div>
                                         <div className="col-12">
                                             <label className="form-label">Images</label>
@@ -554,73 +599,75 @@ const ListCars = () => {
                                                 disabled={!isSuperAdmin}
                                             />
 
-                                            {/* Existing Images */}
-                                            <div className="d-flex flex-wrap gap-3 mb-3">
-                                                {editForm.existingImages.map((image, index) => (
-                                                    <div key={`existing-${image.id}`} className="position-relative" style={{ width: '150px', height: '100px' }}>
-                                                        <img
-                                                            src={image.url}
-                                                            alt={`Car image ${index + 1}`}
-                                                            className="img-fluid rounded border"
-                                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                                        />
-                                                        {
-                                                            isSuperAdmin ? (
-                                                                <button
-                                                                    type="button"
-                                                                    className="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 p-1 rounded-circle"
-                                                                    onClick={() => removeEditImage(image.id, false)}
-                                                                    style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                                                >
-                                                                    ×
-                                                                </button>
-                                                            ) : null
-                                                        }
-                                                    </div>
-                                                ))}
-                                            </div>
+                                            <div className='d-flex gap-3'>
+                                                {/* Existing Images */}
+                                                <div className="d-flex flex-wrap gap-3 mb-3 ">
+                                                    {editForm.existingImages.map((image, index) => (
+                                                        <div key={`existing-${image.id}`} className="position-relative" style={{ width: '150px', height: '100px' }}>
+                                                            <img
+                                                                src={image.url}
+                                                                alt={`Car image ${index + 1}`}
+                                                                className="img-fluid rounded border"
+                                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                            />
+                                                            {
+                                                                isSuperAdmin ? (
+                                                                    <button
+                                                                        type="button"
+                                                                        className="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 p-1 rounded-circle"
+                                                                        onClick={() => removeEditImage(image.id, false)}
+                                                                        style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                                    >
+                                                                        ×
+                                                                    </button>
+                                                                ) : null
+                                                            }
+                                                        </div>
+                                                    ))}
+                                                </div>
 
-                                            {/* Newly Added Images */}
-                                            <div className="d-flex flex-wrap gap-3">
-                                                {editForm.images.map((image, index) => (
-                                                    <div key={`new-${image.id}`} className="position-relative" style={{ width: '150px', height: '100px' }}>
-                                                        <img
-                                                            src={image.url}
-                                                            alt={`New image ${index + 1}`}
-                                                            className="img-fluid rounded border"
-                                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                                        />
-                                                        {
-                                                            isSuperAdmin ? (
-                                                                <button
-                                                                    type="button"
-                                                                    className="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 p-1 rounded-circle"
-                                                                    onClick={() => removeEditImage(image.id, true)}
-                                                                    style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                                                >
-                                                                    ×
-                                                                </button>
-                                                            ) : null}
-                                                    </div>
-                                                ))}
+                                                {/* Newly Added Images */}
+                                                <div className="d-flex flex-wrap gap-3">
+                                                    {editForm.images.map((image, index) => (
+                                                        <div key={`new-${image.id}`} className="position-relative" style={{ width: '150px', height: '100px' }}>
+                                                            <img
+                                                                src={image.url}
+                                                                alt={`New image ${index + 1}`}
+                                                                className="img-fluid rounded border"
+                                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                            />
+                                                            {
+                                                                isSuperAdmin ? (
+                                                                    <button
+                                                                        type="button"
+                                                                        className="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 p-1 rounded-circle"
+                                                                        onClick={() => removeEditImage(image.id, true)}
+                                                                        style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                                    >
+                                                                        ×
+                                                                    </button>
+                                                                ) : null}
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
                                         </div>
 
                                         <div className="col-md-6 d-flex align-items-end">
                                             <div className="form-check">
-                                                <input className="form-check-input" type="checkbox" disabled={!isSuperAdmin} id="edit_available_for_sale" name="available_for_sale" checked={editForm.available_for_sale} onChange={handleEditChange} />
+                                                <input className="form-check-input" type="checkbox" id="edit_available_for_sale" name="available_for_sale" checked={editForm.available_for_sale} onChange={handleEditChange} />
                                                 <label className="form-check-label" htmlFor="edit_available_for_sale">Available for sale</label>
                                             </div>
                                         </div>
-                                        {isSuperAdmin && (
-                                            <div className="col-12 d-flex justify-content-end gap-2 mt-2">
-                                                <button type="button" className="btn btn-secondary" onClick={closeModal} disabled={saving}>Cancel</button>
-                                                <button type="button" className="btn btn-primary" onClick={saveEdit} disabled={saving}>
-                                                    {saving && <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>}
-                                                    Save Changes
-                                                </button>
-                                            </div>
-                                        )}
+
+                                        <div className="col-12 d-flex justify-content-end gap-2 mt-2">
+                                            <button type="button" className="btn btn-secondary" onClick={closeModal} disabled={saving}>Cancel</button>
+                                            <button type="button" className="btn btn-primary" onClick={saveEdit} disabled={saving}>
+                                                {saving && <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>}
+                                                Save Changes
+                                            </button>
+                                        </div>
+
                                     </div>
                                 </div>
                             </div>
@@ -658,7 +705,10 @@ const ListCars = () => {
                 </Modal.Header>
                 <Modal.Body>
                     {currentCarImages.length > 0 ? (
-                        <Carousel>
+                        <Carousel
+                            controls={currentCarImages.length > 1}
+                            indicators={currentCarImages.length > 1}
+                        >
                             {currentCarImages.map((img, idx) => (
                                 <Carousel.Item key={idx}>
                                     <div className="position-relative" style={{ minHeight: '300px' }}>
@@ -674,8 +724,10 @@ const ListCars = () => {
                                             src={img.url}
                                             alt={`Car view ${idx + 1}`}
                                             style={{
-                                                maxHeight: '500px',
-                                                objectFit: 'contain',
+                                                height: '500px',
+                                                width: '500px',
+
+                                                objectFit: 'cover',
                                                 opacity: loadingImages[idx] ? 0 : 1,
                                                 transition: 'opacity 0.3s ease-in-out'
                                             }}
@@ -683,9 +735,9 @@ const ListCars = () => {
                                             onError={() => handleImageLoad(idx)}
                                         />
                                     </div>
-                                    <Carousel.Caption>
+                                    {/* <Carousel.Caption>
                                         <p>Image {idx + 1} of {currentCarImages.length}</p>
-                                    </Carousel.Caption>
+                                    </Carousel.Caption> */}
                                 </Carousel.Item>
                             ))}
                         </Carousel>

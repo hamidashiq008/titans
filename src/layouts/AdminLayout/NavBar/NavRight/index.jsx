@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
 // react-bootstrap
 import { ListGroup, Dropdown, Form } from 'react-bootstrap';
@@ -12,30 +13,23 @@ import avatar2 from 'assets/images/user/avatar-2.jpg';
 // -----------------------|| NAV RIGHT ||-----------------------//
 
 export default function NavRight() {
+  const { user } = useSelector((state) => state.auth);
+  const userName = user?.name || 'User';
+  const userRole = user?.role || 'User';
+
   return (
     <ListGroup as="ul" bsPrefix=" " className="list-unstyled">
-      {/* <ListGroup.Item as="li" bsPrefix=" " className="pc-h-item">
-        <Dropdown>
-          <Dropdown.Toggle as="a" variant="link" className="pc-head-link arrow-none me-0">
-            <i className="material-icons-two-tone">search</i>
-          </Dropdown.Toggle>
-          <Dropdown.Menu className="dropdown-menu-end pc-h-dropdown drp-search">
-            <Form className="px-3">
-              <div className="form-group mb-0 d-flex align-items-center">
-                <FeatherIcon icon="search" />
-                <Form.Control type="search" className="border-0 shadow-none" placeholder="Search here. . ." />
-              </div>
-            </Form>
-          </Dropdown.Menu>
-        </Dropdown>
-      </ListGroup.Item> */}
+
       <ListGroup.Item as="li" bsPrefix=" " className="pc-h-item">
         <Dropdown className="drp-user">
           <Dropdown.Toggle as="a" variant="link" className="pc-head-link arrow-none me-0 user-name">
-            <img src={avatar2} alt="userimage" className="user-avatar" />
+            <img src={user?.profile_image || user?.profile_picture || user?.image_url || avatar2} style={{ width: 50, height: 50, }} alt="userimage" className="user-avatar" />
             <span>
-              <span className="user-name">Haris Arif</span>
-              <span className="user-desc">Administrator</span>
+              <span className="user-name">{userName}</span>
+              <span className="user-desc">{userRole
+                .split('-')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ')}</span>
             </span>
           </Dropdown.Toggle>
           <Dropdown.Menu className="dropdown-menu-end pc-h-dropdown">
@@ -51,7 +45,7 @@ export default function NavRight() {
               <i className="feather icon-lock" /> Lock Screen
             </Link> */}
             <Link to="#" className="dropdown-item" onClick={() => {
-              localStorage.removeItem('access_token'); 
+              localStorage.removeItem('access_token');
               window.location.href = '/auth/login';
             }}>
               <i className="material-icons-two-tone">chrome_reader_mode</i> Logout

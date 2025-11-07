@@ -3,7 +3,6 @@ import axios from 'axios';
 // Create axios instance with base URL
 const instance = axios.create({
     // baseURL: 'https://titans-laravel.edexceledu.com/api',
-    
     baseURL: 'http://127.0.0.1:8000/api',
     headers: {
         'Content-Type': 'application/json',

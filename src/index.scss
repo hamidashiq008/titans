@@ -1,2 +1,15 @@
 // Default Style
 @import 'assets/scss/style';
+
+
+ 
+.carousel-control-prev-icon, .leftControl, .carousel-control-next-icon, .rightControl { 
+        background: #79797954;
+    padding: 16px;
+    border-radius: 50%;
+    // color: #7b7b7b;
+}
+
+ .modal-header {
+    border-bottom: 1px solid #757575 !important;
+ }

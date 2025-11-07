@@ -1,58 +1,54 @@
-import { useSelector } from 'react-redux';
 import { useMemo } from 'react';
+import { useSelector } from 'react-redux';
 
 const useMenuItems = () => {
-  const { user } = useSelector((state) => state.auth, (prev, next) => {
-    // Only re-render if the user's roles have changed
-    const prevRoles = prev.user?.roles?.map(r => r.name).sort().join(',');
-    const nextRoles = next.user?.roles?.map(r => r.name).sort().join(',');
-    return prevRoles === nextRoles;
-  });
+  const { user } = useSelector((state) => state.auth);
+  const isSuperAdmin = useMemo(() => user?.role=== 'super-admin');
 
-  // Memoize the menu items to prevent unnecessary re-renders
-  return useMemo(() => {
-    const isSuperAdmin = user?.role === 'super-admin';
+  const items = useMemo(() => {
+    // Guard while auth state is rehydrating or user not available yet
+    if (!user) return [];
 
-    // Dashboard menu item (only for super-admin)
-    const dashboardMenuItem = isSuperAdmin ? [{
-      id: 'navigation',
-      title: 'Navigation',
-      type: 'group',
-      icon: 'icon-navigation',
-      children: [
+    // 👤 Non super-admin (regular user) menu
+    if (!isSuperAdmin) {
+      return [
         {
-          id: 'dashboard',
-          title: 'Dashboard',
-          type: 'item',
-          icon: 'material-icons-two-tone',
-          iconname: 'home',
-          url: '/dashboard/sales'
+          id: 'car',
+          title: 'Cars',
+          type: 'group',
+          icon: 'icon-navigation',
+          children: [
+            {
+              id: 'cars',
+              title: 'Cars',
+              type: 'item',
+              icon: 'material-icons-two-tone',
+              iconname: 'directions_car',
+              url: '/cars/list-cars'
+            }
+          ]
         }
-      ]
-    }] : [];
-
-    // Users menu items (only for super-admin)
-    const userMenuItems = [];
-
-    if (isSuperAdmin) {
-      userMenuItems.push(
-        {
-          id: 'add-user',
-          title: 'Add User',
-          type: 'item',
-          url: '/users/add-user'
-        },
-        {
-          id: 'list-users',
-          title: 'List Users',
-          type: 'item',
-          url: '/users/list-users'
-        }
-      );
+      ];
     }
 
-    // Common menu items for all roles
-    const commonMenuItems = [
+    // 🧑‍💼 Super Admin menu
+    return [
+      {
+        id: 'navigation',
+        title: 'Navigation',
+        type: 'group',
+        icon: 'icon-navigation',
+        children: [
+          {
+            id: 'dashboard',
+            title: 'Dashboard',
+            type: 'item',
+            icon: 'material-icons-two-tone',
+            iconname: 'home',
+            url: '/dashboard/sales'
+          }
+        ]
+      },
       {
         id: 'car',
         title: 'Cars',
@@ -66,24 +62,13 @@ const useMenuItems = () => {
             icon: 'material-icons-two-tone',
             iconname: 'directions_car',
             children: [
-              ...(isSuperAdmin ? [{
-                id: 'add-car',
-                title: 'Add Car',
-                type: 'item',
-                url: '/cars/add-cars'
-              }] : []),
-              {
-                id: 'list-cars',
-                title: 'List Cars',
-                type: 'item',
-                url: '/cars/list-cars'
-              }
+              { id: 'add-car', title: 'Add Car', type: 'item', url: '/cars/add-cars' },
+              { id: 'list-cars', title: 'List Cars', type: 'item', url: '/cars/list-cars' }
             ]
           }
         ]
       },
-      // Only include Users group if there are user menu items
-      ...(userMenuItems.length > 0 ? [{
+      {
         id: 'users',
         title: 'Users',
         type: 'group',
@@ -95,19 +80,17 @@ const useMenuItems = () => {
             type: 'collapse',
             icon: 'material-icons-two-tone',
             iconname: 'people',
-            children: userMenuItems
+            children: [
+              { id: 'add-user', title: 'Add User', type: 'item', url: '/users/add-user' },
+              { id: 'list-users', title: 'List Users', type: 'item', url: '/users/list-users' }
+            ]
           }
         ]
-      }] : [])
+      }
     ];
+  }, [user, isSuperAdmin]);
 
-    return {
-      items: [
-        ...dashboardMenuItem,
-        ...commonMenuItems
-      ]
-    };
-  }, [user?.roles]); // Only recalculate when user roles change
+  return { items };
 };
 
 export default useMenuItems;

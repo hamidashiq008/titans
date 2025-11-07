@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import { toast } from "react-toastify";
 import axios from "../../axios/Axios";
 import { Modal } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 const ListUsers = () => {
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -64,19 +66,7 @@ const ListUsers = () => {
   }, [searchTerm]);
 
   const handleEdit = (user) => {
-    const userRole = user.roles?.length ? user.roles[0].name : "user";
-    setEditingUser(user);
-    setEditForm({
-      name: user.name || "",
-      email: user.email || "",
-      phone: user.phone || "",
-      address: user.address || "",
-      role: userRole,
-      status: user.status || "inactive",
-      profile_picture: null,
-    });
-    setImagePreview(user.profile_picture_url || null);
-    setShowModal(true);
+    navigate(`/users/edit/${user.id}`, { state: { user } });
   };
 
   const handleEditChange = (e) => {
@@ -199,7 +189,7 @@ const ListUsers = () => {
             <table className="table table-hover align-middle">
               <thead className="table-light">
                 <tr>
-                  <th>#</th>
+                  {/* <th>#</th> */}
                   <th>Name</th>
                   <th>Email</th>
                   <th>Role</th>
@@ -223,7 +213,7 @@ const ListUsers = () => {
                         : "User";
                     return (
                       <tr key={user.id}>
-                        <td>{i + 1}</td>
+                        {/* <td>{i + 1}</td> */}
                         <td>{user.name}</td>
                         <td>{user.email}</td>
                         <td>
@@ -279,7 +269,7 @@ const ListUsers = () => {
         <Modal.Body>
           <div className="row g-3">
             {/* Profile Picture */}
-            <div className="col-12 text-center">
+            {/* <div className="col-12 text-center">
               <div className="position-relative d-inline-block">
                 {imagePreview ? (
                   <img
@@ -306,7 +296,7 @@ const ListUsers = () => {
                   />
                 </label>
               </div>
-            </div>
+            </div> */}
 
             {/* Name */}
             <div className="col-md-6">
@@ -368,7 +358,7 @@ const ListUsers = () => {
             </div>
 
             {/* Status */}
-            <div className="col-md-6">
+            <div className="col-md-12">
               <label className="form-label">Status <span className="text-danger">*</span></label>
               <select
                 className="form-select"

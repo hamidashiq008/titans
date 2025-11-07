@@ -5,10 +5,11 @@ import authReducer from './slices/AuthSlice'
 
 // Configuration for redux-persist
 const persistConfig = {
-    key: 'root',
+    // Use a slice-specific key since we're persisting only the auth slice
+    key: 'auth',
     storage,
-    // Add any reducers you want to persist here
-    whitelist: ['auth']
+    // Persist only the fields we need from the auth slice
+    whitelist: ['user', 'token']
 }
 
 // Create a persisted reducer

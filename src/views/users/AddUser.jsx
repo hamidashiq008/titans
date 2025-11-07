@@ -2,8 +2,9 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import axios from '../../axios/Axios';
 import { X } from 'react-feather';
-
+import { useNavigate } from 'react-router-dom';
 const AddUser = () => {
+    const navigate = useNavigate()
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -27,13 +28,13 @@ const AddUser = () => {
                 const response = await axios.get('/roles');
                 setRoles(response.data.roles || []);
             } catch (error) {
-                console.error('Error fetching roles:', error); 
+                console.error('Error fetching roles:', error);
 
                 setRoles([
                     { id: 'user', name: 'User' },
                     { id: 'admin', name: 'Admin' }
                 ]);
-                
+
             } finally {
                 setIsLoading(false);
             }
@@ -127,11 +128,11 @@ const AddUser = () => {
                 profile_picture: null
             });
 
+            navigate('/users/list-users')
             if (imagePreview) {
                 URL.revokeObjectURL(imagePreview);
                 setImagePreview(null);
             }
-
         } catch (error) {
             const msg = error?.response?.data?.message || error.message || 'Failed to add user';
             console.error(error);
@@ -147,9 +148,9 @@ const AddUser = () => {
                     <h3 className="mb-4 text-center">Add New User</h3>
                     <form onSubmit={handleSubmit}>
                         <div className="row g-3">
-                            
+
                             {/* Profile Picture */}
-                            <div className="col-12 text-center mb-4">
+                            {/* <div className="col-12 text-center mb-4">
                                 <div className="position-relative d-inline-block">
                                     <div className="rounded-circle overflow-hidden" style={{ width: '150px', height: '150px', border: '2px solid #dee2e6' }}>
                                         {imagePreview ? (
@@ -190,7 +191,7 @@ const AddUser = () => {
                                         )}
                                     </div>
                                 </div>
-                            </div>
+                            </div> */}
 
                             {/* Name */}
                             <div className="col-md-6">
@@ -285,7 +286,7 @@ const AddUser = () => {
                             </div>
 
                             {/* Address */}
-                            <div className="col-12">
+                            {/* <div className="col-12">
                                 <label className="form-label">Address</label>
                                 <textarea
                                     className="form-control"
@@ -295,10 +296,10 @@ const AddUser = () => {
                                     value={formData.address}
                                     onChange={handleChange}
                                 ></textarea>
-                            </div>
+                            </div> */}
 
                             {/* Active Status */}
-                            <div className="col-12">
+                            {/* <div className="col-12">
                                 <div className="form-check form-switch">
                                     <input
                                         className="form-check-input"
@@ -312,7 +313,7 @@ const AddUser = () => {
                                         Active Account
                                     </label>
                                 </div>
-                            </div>
+                            </div> */}
 
                             {/* Submit Button */}
                             <div className="col-12 text-center mt-4">
