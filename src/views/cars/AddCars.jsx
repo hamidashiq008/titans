@@ -4,10 +4,258 @@ import axios from '../../axios/Axios'
 import { X, Droplet } from 'react-feather'
 import { SketchPicker } from 'react-color'
 import { useNavigate } from 'react-router-dom'
+const CAR_CATEGORIES = [
+    {
+        type: 'SUV',
+        cars: [
+            'Toyota Land Cruiser',
+            'Toyota Land Cruiser Prado',
+            'Toyota Fortuner',
+            'Nissan Patrol',
+            'Nissan X-Trail',
+            'Nissan Kicks',
+            'Mitsubishi Pajero',
+            'Mitsubishi Outlander',
+            'Kia Sportage',
+            'Kia Sorento',
+            'Kia Seltos',
+            'Hyundai Tucson',
+            'Hyundai Santa Fe',
+            'Hyundai Palisade',
+            'Hyundai Creta',
+            'Honda CR-V',
+            'Honda HR-V',
+            'Mazda CX-5',
+            'Mazda CX-9',
+            'Lexus LX',
+            'Lexus RX',
+            'Lexus NX',
+            'Lexus GX',
+            'BMW X1',
+            'BMW X3',
+            'BMW X5',
+            'BMW X7',
+            'Mercedes-Benz GLC',
+            'Mercedes-Benz GLE',
+            'Mercedes-Benz GLS',
+            'Mercedes-Benz G-Class',
+            'Audi Q3',
+            'Audi Q5',
+            'Audi Q7',
+            'Audi Q8',
+            'Volkswagen Tiguan',
+            'Volkswagen Touareg',
+            'Peugeot 3008',
+            'Peugeot 5008',
+            'Renault Duster',
+            'Renault Koleos',
+            'Volvo XC40',
+            'Volvo XC60',
+            'Volvo XC90',
+            'Chevrolet Captiva',
+            'Chevrolet Tahoe',
+            'Chevrolet Suburban',
+            'GMC Yukon',
+            'GMC Terrain',
+            'Infiniti QX50',
+            'Infiniti QX60',
+            'Infiniti QX80',
+            'Range Rover',
+            'Range Rover Sport',
+            'Land Rover Defender',
+            'Land Rover Discovery',
+            'Porsche Cayenne',
+            'Porsche Macan',
+            'Jaguar F-Pace',
+            'Tesla Model X',
+            'Tesla Model Y',
+            'MG ZS',
+            'MG HS',
+            'BYD Atto 3',
+            'Geely Coolray',
+            'Haval H6',
+            'Chery Tiggo 8',
+            'Jetour T2'
+        ]
+    },
+    {
+        type: 'Sedan',
+        cars: [
+            'Toyota Corolla',
+            'Toyota Camry',
+            'Toyota Avalon',
+            'Nissan Altima',
+            'Nissan Maxima',
+            'Nissan Sunny',
+            'Honda Accord',
+            'Honda Civic',
+            'Hyundai Elantra',
+            'Hyundai Sonata',
+            'Hyundai Accent',
+            'Kia Cerato',
+            'Kia Rio',
+            'Mazda 3',
+            'Mazda 6',
+            'Lexus ES',
+            'Lexus LS',
+            'BMW 3 Series',
+            'BMW 5 Series',
+            'BMW 7 Series',
+            'Mercedes-Benz C-Class',
+            'Mercedes-Benz E-Class',
+            'Mercedes-Benz S-Class',
+            'Audi A3',
+            'Audi A4',
+            'Audi A6',
+            'Audi A8',
+            'Volkswagen Passat',
+            'Volkswagen Jetta',
+            'Peugeot 508',
+            'Renault Symbol',
+            'Renault Megane',
+            'Chevrolet Malibu',
+            'Chevrolet Impala',
+            'Ford Fusion',
+            'Infiniti Q50',
+            'Infiniti Q70',
+            'Genesis G70',
+            'Genesis G80',
+            'Genesis G90',
+            'BYD Seal',
+            'Tesla Model 3',
+            'Polestar 2',
+            'MG 5',
+            'Chery Arrizo 6',
+            'GAC Empow'
+        ]
+    },
+    {
+        type: 'Pickup / Truck',
+        cars: [
+            'Toyota Hilux',
+            'Nissan Navara',
+            'Nissan Frontier',
+            'Mitsubishi L200',
+            'Isuzu D-Max',
+            'Ford F-150',
+            'Chevrolet Silverado',
+            'GMC Sierra',
+            'Ram 1500',
+            'Mazda BT-50',
+            'Great Wall Wingle',
+            'JAC T8'
+        ]
+    },
+    {
+        type: 'Coupe / Sports',
+        cars: [
+            'Toyota Supra',
+            'Nissan Z',
+            'Ford Mustang',
+            'Chevrolet Camaro',
+            'Dodge Challenger',
+            'BMW Z4',
+            'BMW 4 Series Coupe',
+            'Audi TT',
+            'Audi R8',
+            'Mercedes-Benz AMG GT',
+            'Porsche 911',
+            'Porsche 718 Cayman',
+            'Porsche 718 Boxster',
+            'Jaguar F-Type',
+            'Lexus RC',
+            'Lexus LC',
+            'Aston Martin Vantage',
+            'Ferrari F8 Tributo',
+            'Ferrari Roma',
+            'Lamborghini Huracán',
+            'Lamborghini Aventador',
+            'McLaren 720S',
+            'McLaren Artura'
+        ]
+    },
+    {
+        type: 'Hatchback / Compact',
+        cars: [
+            'Toyota Yaris',
+            'Hyundai i20',
+            'Kia Picanto',
+            'Kia Pegas',
+            'Honda Jazz',
+            'Suzuki Swift',
+            'Suzuki Baleno',
+            'Mazda 2',
+            'Volkswagen Golf',
+            'Mini Cooper',
+            'Ford Focus',
+            'Peugeot 208',
+            'Renault Clio',
+            'MG 3'
+        ]
+    },
+    {
+        type: 'Luxury / Executive',
+        cars: [
+            'Rolls-Royce Phantom',
+            'Rolls-Royce Ghost',
+            'Rolls-Royce Cullinan',
+            'Bentley Bentayga',
+            'Bentley Continental GT',
+            'Bentley Flying Spur',
+            'Mercedes-Maybach S-Class',
+            'BMW 7 Series',
+            'Audi A8',
+            'Genesis G90',
+            'Lexus LS'
+        ]
+    },
+    {
+        type: 'Electric / Hybrid',
+        cars: [
+            'Tesla Model S',
+            'Tesla Model 3',
+            'Tesla Model X',
+            'Tesla Model Y',
+            'BYD Atto 3',
+            'BYD Dolphin',
+            'Hyundai Ioniq 5',
+            'Hyundai Ioniq 6',
+            'Kia EV6',
+            'BMW i4',
+            'BMW i7',
+            'Mercedes EQS',
+            'Mercedes EQE',
+            'Audi e-tron',
+            'Porsche Taycan',
+            'Polestar 2',
+            'Nissan Leaf',
+            'Toyota Prius',
+            'Lexus UX Hybrid'
+        ]
+    },
+    {
+        type: 'Commercial / Van / Bus',
+        cars: [
+            'Toyota Hiace',
+            'Nissan Urvan',
+            'Hyundai Staria',
+            'Hyundai H-1',
+            'Kia Carnival',
+            'Kia Bongo',
+            'Ford Transit',
+            'Mercedes-Benz Sprinter',
+            'Volkswagen Transporter',
+            'Isuzu N-Series',
+            'Hino 300',
+            'Iveco Daily'
+        ]
+    }
+]
 const AddCars = () => {
     const navigate = useNavigate()
     const [formData, setFormData] = useState({
         name: '',
+        type: '',
         source: '',
         model: '',
         colour: '',
@@ -41,6 +289,15 @@ const AddCars = () => {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target
+        // If type changes, also reset the car name
+        if (name === 'type') {
+            setFormData((prev) => ({
+                ...prev,
+                type: value,
+                name: ''
+            }))
+            return
+        }
         setFormData((prev) => ({
             ...prev,
             [name]: type === 'checkbox' ? checked : value
@@ -133,6 +390,7 @@ const AddCars = () => {
             toast.success('Car added successfully')
             setFormData({
                 name: '',
+                type: '',
                 source: '',
                 model: '',
                 colour: '',
@@ -153,6 +411,10 @@ const AddCars = () => {
             setIsSubmitting(false)
         }
     }
+    // Compute cars for the selected category
+    const selectedCategory = CAR_CATEGORIES.find(c => c.type === formData.type)
+    const filteredCars = selectedCategory ? selectedCategory.cars : []
+
     return (
         <div className=''>
             <div className="container py-4">
@@ -160,17 +422,37 @@ const AddCars = () => {
                     <h3 className="mb-4 text-center">Add Car</h3>
                     <form onSubmit={handleSubmit}>
                         <div className="row g-3">
-                            {/* Car Name */}
+                            {/* Type */}
                             <div className="col-md-6">
-                                <label className="form-label">Car Name</label>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="Enter car name"
+                                <label className="form-label">Type</label>
+                                <select
+                                    className="form-select"
+                                    name="type"
+                                    value={formData.type}
+                                    onChange={handleChange}
+                                >
+                                    <option value="">Select type</option>
+                                    {CAR_CATEGORIES.map(cat => (
+                                        <option key={cat.type} value={cat.type}>{cat.type}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Car Name (dependent) */}
+                            <div className="col-md-6">
+                                <label className="form-label">Car</label>
+                                <select
+                                    className="form-select"
                                     name="name"
                                     value={formData.name}
                                     onChange={handleChange}
-                                />
+                                    disabled={!formData.type}
+                                >
+                                    <option value="">{formData.type ? 'Select car' : 'Select type first'}</option>
+                                    {filteredCars.map(car => (
+                                        <option key={car} value={car}>{car}</option>
+                                    ))}
+                                </select>
                             </div>
 
                             {/* Source Dropdown */}

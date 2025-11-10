@@ -63,3 +63,6 @@ File: style.css
 @import 'customizer';
 
 @import 'react-common.scss';
+ a{
+    text-decoration: none !important;
+ }

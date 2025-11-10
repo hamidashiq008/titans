@@ -37,6 +37,7 @@ const ListCars = () => {
     const [carToDelete, setCarToDelete] = useState(null)
     const [deleting, setDeleting] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
+    const [actionMenuId, setActionMenuId] = useState(null)
     const [pagination, setPagination] = useState({
         currentPage: 1,
         perPage: 10,
@@ -55,7 +56,9 @@ const ListCars = () => {
                 params: {
                     page,
                     per_page: pagination.perPage,
-                    search
+                    search,
+                    sort_by: 'id',
+                    sort_order: 'desc'
                 }
             })
 
@@ -105,6 +108,145 @@ const ListCars = () => {
         document.addEventListener('mousedown', handleClickOutside)
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
+
+    useEffect(() => {
+        const onDocClick = (e) => {
+            // Close any open action menu when clicking outside
+            setActionMenuId(null)
+        }
+        document.addEventListener('click', onDocClick)
+        return () => document.removeEventListener('click', onDocClick)
+    }, [])
+
+    const toggleActionMenu = (e, id) => {
+        e.stopPropagation()
+        setActionMenuId(prev => (prev === id ? null : id))
+    }
+
+    const handleDownloadPdf = (car) => {
+        const win = window.open('', '_blank')
+        if (!win) return
+        const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Car ${car?.name || ''} - Details</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 24px; }
+    body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f7fa;
+    color: #333;
+    padding: 20px;
+  }
+
+  .car-card {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    overflow: hidden;
+    padding: 30px;
+  }
+
+  .car-card h1 {
+    font-size: 28px;
+    margin-bottom: 20px;
+    color: #222;
+    text-align: center;
+  }
+
+  .car-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 20px;
+    margin-bottom: 25px;
+  }
+
+  .meta {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+  }
+
+  .meta .label {
+    font-weight: 600;
+    color: #555;
+  }
+
+  .meta .value {
+    color: #111;
+  }
+
+  .images {
+    display: flex;
+    gap: 15px;
+    overflow-x: auto;
+    padding-top: 10px;
+  }
+
+  .images img {
+    width: 200px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 8px;
+    transition: transform 0.3s;
+    cursor: pointer;
+  }
+
+  .images img:hover {
+    transform: scale(1.05);
+  }
+
+  /* Scrollbar styling */
+  .images::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .images::-webkit-scrollbar-thumb {
+    background: #aaa;
+    border-radius: 4px;
+  }
+    h1 { margin: 0 0 12px; font-size: 20px; }
+    .meta { margin: 4px 0; }
+    .label { color: #666; width: 140px; display: inline-block; }
+    .value { color: #000; }
+    .images { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .images img { width: 180px; height: 120px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; }
+  </style>
+  </head>
+  <body>
+  
+
+<div class="car-card">
+  <h1>Car Details</h1>
+  <div class="car-meta">
+    <div class="meta"><span class="label">Name:</span><span class="value">${car?.name || '-'}</span></div>
+    <div class="meta"><span class="label">Source:</span><span class="value">${car?.source || '-'}</span></div>
+    <div class="meta"><span class="label">Model:</span><span class="value">${car?.model || '-'}</span></div>
+    <div class="meta"><span class="label">Colour:</span><span class="value">${car?.colour || '-'}</span></div>
+    <div class="meta"><span class="label">Chassis No:</span><span class="value">${car?.chasis_number || '-'}</span></div>
+    <div class="meta"><span class="label">Status:</span><span class="value">${car?.status || '-'}</span></div>
+    <div class="meta"><span class="label">Rent Type:</span><span class="value">${(car?.rent_period || '').toString().replaceAll('_',' ')}</span></div>
+    <div class="meta"><span class="label">Rent Price:</span><span class="value">${car?.rent_price || '-'}</span></div>
+  </div>
+  <div class="images">
+    ${(car?.image_urls || (car?.images?.[0]?.image_urls) || []).map((u) => typeof u === 'string' ? u : (u?.url ?? u)).map((src) => `<img src="${src}" />`).join('')}
+  </div>
+</div>
+
+    <script>
+      window.onload = () => { window.print(); setTimeout(() => window.close(), 200); };
+    </script>
+  </body>
+</html>`
+        win.document.write(html)
+        win.document.close()
+    }
 
     const handlePageChange = (page) => {
         fetchCars(page, searchTerm)
@@ -284,15 +426,105 @@ const ListCars = () => {
         setLoadingImages({})
     }
 
+    const handleDownloadAllPdf = async () => {
+        try {
+            const { data } = await axios.get('/cars', {
+                params: {
+                    page: 1,
+                    per_page: 10000,
+                    search: searchTerm,
+                    sort_by: 'id',
+                    sort_order: 'desc'
+                }
+            })
+            const rows = Array.isArray(data) ? data : (data?.data || [])
+            const win = window.open('', '_blank')
+            if (!win) return
+            const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cars List</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 24px; color:#111; }
+    h1 { margin: 0 0 16px; font-size: 20px; }
+    .stamp { color:#666; font-size:12px; margin-bottom:12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background: #f5f7fa; }
+    .status { display:inline-block; padding:2px 6px; border-radius:999px; font-size:11px; color:#fff; }
+    .status.available { background:#198754; }
+    .status.rented { background:#ffc107; color:#111; }
+    .status.maintenance { background:#0dcaf0; }
+    @media print { @page { margin: 12mm; } }
+  </style>
+  </head>
+  <body>
+    <h1>Cars List</h1>
+    <div class="stamp">Generated: ${new Date().toLocaleString()}</div>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Source</th>
+          <th>Model</th>
+          <th>Colour</th>
+          <th>Chassis No</th>
+          <th>Status</th>
+          <th>Rent Type</th>
+          <th>Rent Price</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map((car, idx) => {
+                const s = (car?.status || '').toString().toLowerCase()
+                const statusClass = s.includes('maintenance') ? 'maintenance' : s
+                return `<tr>
+                  <td>${idx + 1}</td>
+                  <td>${car?.name ?? '-'}</td>
+                  <td>${car?.source ?? '-'}</td>
+                  <td>${car?.model ?? '-'}</td>
+                  <td>${car?.colour ?? '-'}</td>
+                  <td>${car?.chasis_number ?? '-'}</td>
+                  <td><span class="status ${statusClass}">${car?.status ?? '-'}</span></td>
+                  <td>${(car?.rent_period || '').toString().replaceAll('_',' ')}</td>
+                  <td>${car?.rent_price ?? '-'}</td>
+                </tr>`
+            }).join('')}
+      </tbody>
+    </table>
+    <script>
+      window.onload = () => { window.print(); setTimeout(() => window.close(), 200); };
+    </script>
+  </body>
+</html>`
+            win.document.write(html)
+            win.document.close()
+        } catch (e) {
+            console.error('Failed to build cars PDF', e)
+            toast.error(e?.response?.data?.message || e.message || 'Failed to download')
+        }
+    }
+
     return (
         <>
             <div className="container py-4">
                 <div className="card shadow-sm p-4">
                     <div className="header d-flex justify-content-between align-items-center ">
-
-                        <h3 className="mb-4 text-center">Car List</h3>
-                        <div className=" g-2 mb-3">
-                            <div className="">
+                        <h3 className="mb-4 text-center d-flex align-items-center gap-2">
+                            Car List
+                        </h3>
+                        <div className="d-flex align-items-center gap-2 g-2 mb-3">
+                            <button type="button" className="btn btn-outline-secondary d-flex align-items-center gap-2" onClick={handleDownloadAllPdf} title="Download all as PDF">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M.5 9.9A5.5 5.5 0 0 1 9.9.5a5.5 5.5 0 0 1 5.6 8.9H13V8a5 5 0 1 0-10 0v1.4H.5z"/>
+                                    <path d="M5 10.5a.5.5 0 0 1 .5-.5H7V6.5a.5.5 0 0 1 1 0V10h1.5a.5.5 0 0 1 .354.854l-2 2a.5.5 0 0 1-.708 0l-2-2A.5.5 0 0 1 5 10.5z"/>
+                                </svg>
+                                Download
+                            </button>
+                            <div>
                                 <input
                                     type="text"
                                     className="form-control"
@@ -380,38 +612,57 @@ const ListCars = () => {
                                                     </span>
                                                 </div>
                                             </td>
-                                       <td>{car.rent_period.replaceAll('_', ' ')}</td>
+                                            <td>{car.rent_period.replaceAll('_', ' ')}</td>
 
                                             <td>${car.rent_price}</td>
-
-                                            {isSuperAdmin ? (
-                                                <td>
-                                                    <button type="button" className="btn btn-sm btn-link text-primary" onClick={() => handleView(car)} aria-label="View">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                                                            <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z" />
-                                                            <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z" />
-                                                        </svg>
-                                                    </button>
-                                                    <button type="button" className="btn btn-sm btn-link text-primary me-2" onClick={() => handleEdit(car)} aria-label="Edit">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                                                            <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-9.5 9.5a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l9.5-9.5zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.293l6.5-6.5z" />
-                                                        </svg>
-                                                    </button>
-                                                    <button type="button" className="btn btn-sm btn-link text-danger" onClick={() => askDelete(car)} aria-label="Delete">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                                                            <path d="M5.5 5.5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5zm3 0a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5z" />
-                                                            <path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" />
-                                                        </svg>
-                                                    </button>
-                                                </td>
-                                            ) : <td>
-                                                <button type="button" className="btn btn-sm btn-link text-primary" onClick={() => handleView(car)} aria-label="View">
+                                            <td className="position-relative">
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-sm btn-outline-secondary"
+                                                    onClick={(e) => toggleActionMenu(e, car.id)}
+                                                    aria-label="Actions"
+                                                >
+                                                    {/* Ellipsis icon */}
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                                                        <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z" />
-                                                        <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z" />
+                                                        <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
                                                     </svg>
                                                 </button>
-                                            </td>}
+                                                {actionMenuId === car.id && (
+                                                    <div
+                                                        className="dropdown-menu show"
+                                                        style={{ display: 'block', position: 'absolute', right: 0, top: '100%', minWidth: 160 }}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <button className="dropdown-item d-flex align-items-center gap-2" onClick={() => handleView(car)}>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                                                <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8z" />
+                                                                <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z" />
+                                                            </svg>
+                                                            View
+                                                        </button>
+                                                        <button className="dropdown-item d-flex align-items-center gap-2" onClick={() => handleEdit(car)} disabled={!isSuperAdmin}>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                                                <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-9.5 9.5a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l9.5-9.5z" />
+                                                            </svg>
+                                                            Edit
+                                                        </button>
+                                                        <button className="dropdown-item d-flex align-items-center gap-2 text-danger" onClick={() => askDelete(car)} disabled={!isSuperAdmin}>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                                                <path d="M5.5 5.5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5zm3 0a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5z" />
+                                                                <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1z" />
+                                                            </svg>
+                                                            Delete
+                                                        </button>
+                                                        <button className="dropdown-item d-flex align-items-center gap-2" onClick={() => handleDownloadPdf(car)}>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                                                <path d="M.5 9.9A5.5 5.5 0 0 1 9.9.5a5.5 5.5 0 0 1 5.6 8.9H13V8a5 5 0 1 0-10 0v1.4H.5z"/>
+                                                                <path d="M5 10.5a.5.5 0 0 1 .5-.5H7V6.5a.5.5 0 0 1 1 0V10h1.5a.5.5 0 0 1 .354.854l-2 2a.5.5 0 0 1-.708 0l-2-2A.5.5 0 0 1 5 10.5z"/>
+                                                            </svg>
+                                                            Download PDF
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </td>
                                         </tr>
                                     ))
                                 })()}

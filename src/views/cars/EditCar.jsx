@@ -4,6 +4,254 @@ import axios from '../../axios/Axios';
 import { toast } from 'react-toastify';
 import { SketchPicker } from 'react-color';
 
+const CAR_CATEGORIES = [
+  {
+    type: 'SUV',
+    cars: [
+      'Toyota Land Cruiser',
+      'Toyota Land Cruiser Prado',
+      'Toyota Fortuner',
+      'Nissan Patrol',
+      'Nissan X-Trail',
+      'Nissan Kicks',
+      'Mitsubishi Pajero',
+      'Mitsubishi Outlander',
+      'Kia Sportage',
+      'Kia Sorento',
+      'Kia Seltos',
+      'Hyundai Tucson',
+      'Hyundai Santa Fe',
+      'Hyundai Palisade',
+      'Hyundai Creta',
+      'Honda CR-V',
+      'Honda HR-V',
+      'Mazda CX-5',
+      'Mazda CX-9',
+      'Lexus LX',
+      'Lexus RX',
+      'Lexus NX',
+      'Lexus GX',
+      'BMW X1',
+      'BMW X3',
+      'BMW X5',
+      'BMW X7',
+      'Mercedes-Benz GLC',
+      'Mercedes-Benz GLE',
+      'Mercedes-Benz GLS',
+      'Mercedes-Benz G-Class',
+      'Audi Q3',
+      'Audi Q5',
+      'Audi Q7',
+      'Audi Q8',
+      'Volkswagen Tiguan',
+      'Volkswagen Touareg',
+      'Peugeot 3008',
+      'Peugeot 5008',
+      'Renault Duster',
+      'Renault Koleos',
+      'Volvo XC40',
+      'Volvo XC60',
+      'Volvo XC90',
+      'Chevrolet Captiva',
+      'Chevrolet Tahoe',
+      'Chevrolet Suburban',
+      'GMC Yukon',
+      'GMC Terrain',
+      'Infiniti QX50',
+      'Infiniti QX60',
+      'Infiniti QX80',
+      'Range Rover',
+      'Range Rover Sport',
+      'Land Rover Defender',
+      'Land Rover Discovery',
+      'Porsche Cayenne',
+      'Porsche Macan',
+      'Jaguar F-Pace',
+      'Tesla Model X',
+      'Tesla Model Y',
+      'MG ZS',
+      'MG HS',
+      'BYD Atto 3',
+      'Geely Coolray',
+      'Haval H6',
+      'Chery Tiggo 8',
+      'Jetour T2',
+    ],
+  },
+  {
+    type: 'Sedan',
+    cars: [
+      'Toyota Corolla',
+      'Toyota Camry',
+      'Toyota Avalon',
+      'Nissan Altima',
+      'Nissan Maxima',
+      'Nissan Sunny',
+      'Honda Accord',
+      'Honda Civic',
+      'Hyundai Elantra',
+      'Hyundai Sonata',
+      'Hyundai Accent',
+      'Kia Cerato',
+      'Kia Rio',
+      'Mazda 3',
+      'Mazda 6',
+      'Lexus ES',
+      'Lexus LS',
+      'BMW 3 Series',
+      'BMW 5 Series',
+      'BMW 7 Series',
+      'Mercedes-Benz C-Class',
+      'Mercedes-Benz E-Class',
+      'Mercedes-Benz S-Class',
+      'Audi A3',
+      'Audi A4',
+      'Audi A6',
+      'Audi A8',
+      'Volkswagen Passat',
+      'Volkswagen Jetta',
+      'Peugeot 508',
+      'Renault Symbol',
+      'Renault Megane',
+      'Chevrolet Malibu',
+      'Chevrolet Impala',
+      'Ford Fusion',
+      'Infiniti Q50',
+      'Infiniti Q70',
+      'Genesis G70',
+      'Genesis G80',
+      'Genesis G90',
+      'BYD Seal',
+      'Tesla Model 3',
+      'Polestar 2',
+      'MG 5',
+      'Chery Arrizo 6',
+      'GAC Empow',
+    ],
+  },
+  {
+    type: 'Pickup / Truck',
+    cars: [
+      'Toyota Hilux',
+      'Nissan Navara',
+      'Nissan Frontier',
+      'Mitsubishi L200',
+      'Isuzu D-Max',
+      'Ford F-150',
+      'Chevrolet Silverado',
+      'GMC Sierra',
+      'Ram 1500',
+      'Mazda BT-50',
+      'Great Wall Wingle',
+      'JAC T8',
+    ],
+  },
+  {
+    type: 'Coupe / Sports',
+    cars: [
+      'Toyota Supra',
+      'Nissan Z',
+      'Ford Mustang',
+      'Chevrolet Camaro',
+      'Dodge Challenger',
+      'BMW Z4',
+      'BMW 4 Series Coupe',
+      'Audi TT',
+      'Audi R8',
+      'Mercedes-Benz AMG GT',
+      'Porsche 911',
+      'Porsche 718 Cayman',
+      'Porsche 718 Boxster',
+      'Jaguar F-Type',
+      'Lexus RC',
+      'Lexus LC',
+      'Aston Martin Vantage',
+      'Ferrari F8 Tributo',
+      'Ferrari Roma',
+      'Lamborghini Huracán',
+      'Lamborghini Aventador',
+      'McLaren 720S',
+      'McLaren Artura',
+    ],
+  },
+  {
+    type: 'Hatchback / Compact',
+    cars: [
+      'Toyota Yaris',
+      'Hyundai i20',
+      'Kia Picanto',
+      'Kia Pegas',
+      'Honda Jazz',
+      'Suzuki Swift',
+      'Suzuki Baleno',
+      'Mazda 2',
+      'Volkswagen Golf',
+      'Mini Cooper',
+      'Ford Focus',
+      'Peugeot 208',
+      'Renault Clio',
+      'MG 3',
+    ],
+  },
+  {
+    type: 'Luxury / Executive',
+    cars: [
+      'Rolls-Royce Phantom',
+      'Rolls-Royce Ghost',
+      'Rolls-Royce Cullinan',
+      'Bentley Bentayga',
+      'Bentley Continental GT',
+      'Bentley Flying Spur',
+      'Mercedes-Maybach S-Class',
+      'BMW 7 Series',
+      'Audi A8',
+      'Genesis G90',
+      'Lexus LS',
+    ],
+  },
+  {
+    type: 'Electric / Hybrid',
+    cars: [
+      'Tesla Model S',
+      'Tesla Model 3',
+      'Tesla Model X',
+      'Tesla Model Y',
+      'BYD Atto 3',
+      'BYD Dolphin',
+      'Hyundai Ioniq 5',
+      'Hyundai Ioniq 6',
+      'Kia EV6',
+      'BMW i4',
+      'BMW i7',
+      'Mercedes EQS',
+      'Mercedes EQE',
+      'Audi e-tron',
+      'Porsche Taycan',
+      'Polestar 2',
+      'Nissan Leaf',
+      'Toyota Prius',
+      'Lexus UX Hybrid',
+    ],
+  },
+  {
+    type: 'Commercial / Van / Bus',
+    cars: [
+      'Toyota Hiace',
+      'Nissan Urvan',
+      'Hyundai Staria',
+      'Hyundai H-1',
+      'Kia Carnival',
+      'Kia Bongo',
+      'Ford Transit',
+      'Mercedes-Benz Sprinter',
+      'Volkswagen Transporter',
+      'Isuzu N-Series',
+      'Hino 300',
+      'Iveco Daily',
+    ],
+  },
+];
+
 export default function EditCar() {
   const { id } = useParams();
   const location = useLocation();
@@ -16,6 +264,7 @@ export default function EditCar() {
 
   const [form, setForm] = useState({
     name: '',
+    type: '',
     source: '',
     model: '',
     colour: '',
@@ -52,8 +301,10 @@ export default function EditCar() {
   // Prefill
   useEffect(() => {
     const fill = (c) => {
+      const derivedType = CAR_CATEGORIES.find((cat) => (cat.cars || []).includes(c?.name))?.type || '';
       setForm({
         name: c?.name || '',
+        type: c?.type || derivedType,
         source: c?.source || '',
         model: c?.model || '',
         colour: c?.colour || '',
@@ -96,6 +347,10 @@ export default function EditCar() {
 
   const onChange = (e) => {
     const { name, value, type, checked } = e.target;
+    if (name === 'type') {
+      setForm((p) => ({ ...p, type: value, name: '' }));
+      return;
+    }
     setForm((p) => ({ ...p, [name]: type === 'checkbox' ? checked : value }));
   };
 
@@ -131,6 +386,7 @@ export default function EditCar() {
       setSaving(true);
       const fd = new FormData();
       fd.append('name', form.name);
+      if (form.type) fd.append('type', form.type);
       if (form.source) fd.append('source', form.source);
       if (form.model) fd.append('model', form.model);
       if (form.colour) fd.append('colour', form.colour);
@@ -175,6 +431,9 @@ export default function EditCar() {
     return c;
   }, [form.colour]);
 
+  const selectedCategory = CAR_CATEGORIES.find((c) => c.type === form.type);
+  const filteredCars = selectedCategory ? selectedCategory.cars : [];
+
   if (loading) return <div className="container py-4">Loading…</div>;
   if (error) return <div className="container py-4"><div className="alert alert-danger">{error}</div></div>;
 
@@ -188,8 +447,22 @@ export default function EditCar() {
         <form onSubmit={onSubmit}>
           <div className="row g-3">
             <div className="col-md-6">
-              <label className="form-label">Car Name</label>
-              <input className="form-control" name="name" value={form.name} onChange={onChange} />
+              <label className="form-label">Type</label>
+              <select className="form-select" name="type" value={form.type} onChange={onChange}>
+                <option value="">Select type</option>
+                {CAR_CATEGORIES.map((cat) => (
+                  <option key={cat.type} value={cat.type}>{cat.type}</option>
+                ))}
+              </select>
+            </div>
+            <div className="col-md-6">
+              <label className="form-label">Car</label>
+              <select className="form-select" name="name" value={form.name} onChange={onChange} disabled={!form.type}>
+                <option value="">{form.type ? 'Select car' : 'Select type first'}</option>
+                {filteredCars.map((car) => (
+                  <option key={car} value={car}>{car}</option>
+                ))}
+              </select>
             </div>
             <div className="col-md-6">
               <label className="form-label">Source</label>
