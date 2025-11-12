@@ -282,6 +282,8 @@ export default function EditCar() {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const colorPickerRef = useRef(null);
   const inputRef = useRef(null);
+  const [watermarkText, setWatermarkText] = useState('');
+  const [fullScreenWatermark, setFullScreenWatermark] = useState(true);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -317,9 +319,9 @@ export default function EditCar() {
       const urls = c?.image_urls || (c?.images?.[0]?.image_urls) || [];
       const normalized = Array.isArray(urls)
         ? urls.map((u) => {
-            if (typeof u === 'string') return { id: Math.random().toString(36).slice(2), serverId: null, url: u };
-            return { id: Math.random().toString(36).slice(2), serverId: u.id ?? null, url: u.url ?? u };
-          })
+          if (typeof u === 'string') return { id: Math.random().toString(36).slice(2), serverId: null, url: u };
+          return { id: Math.random().toString(36).slice(2), serverId: u.id ?? null, url: u.url ?? u };
+        })
         : [];
       setExistingImages(normalized);
       setNewImages([]);
@@ -354,11 +356,79 @@ export default function EditCar() {
     setForm((p) => ({ ...p, [name]: type === 'checkbox' ? checked : value }));
   };
 
-  const onFilesSelected = (e) => {
+  const addWatermarkToImage = (file, text) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        if (text && text.trim()) {
+          if (fullScreenWatermark) {
+            const baseSize = Math.min(canvas.width, canvas.height);
+            const fontSize = Math.max(24, Math.round(baseSize * 0.06));
+            const spacing = Math.round(fontSize * 4);
+            ctx.save();
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate(-Math.PI / 6);
+            ctx.font = `${fontSize}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            for (let y = -canvas.height; y <= canvas.height; y += spacing) {
+              for (let x = -canvas.width; x <= canvas.width; x += spacing) {
+                ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+                ctx.lineWidth = Math.max(1, Math.round(fontSize / 14));
+                ctx.strokeText(text, x, y);
+                ctx.fillStyle = 'rgba(255,255,255,0.15)';
+                ctx.fillText(text, x, y);
+              }
+            }
+            ctx.restore();
+          } else {
+            const margin = Math.max(10, Math.round(Math.min(canvas.width, canvas.height) * 0.02));
+            const fontSize = Math.max(20, Math.round(canvas.width * 0.04));
+            ctx.font = `${fontSize}px sans-serif`;
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'bottom';
+            const x = canvas.width - margin;
+            const y = canvas.height - margin;
+            ctx.fillStyle = 'rgba(0,0,0,0.35)';
+            ctx.fillText(text, x + 2, y + 2);
+            ctx.fillStyle = 'rgba(255,255,255,0.7)';
+            ctx.fillText(text, x, y);
+          }
+        }
+
+        canvas.toBlob((blob) => {
+          URL.revokeObjectURL(url);
+          if (!blob) return reject(new Error('Failed to create blob'));
+          const watermarkedFile = new File([blob], file.name, { type: blob.type || file.type });
+          const previewUrl = URL.createObjectURL(blob);
+          resolve({ file: watermarkedFile, previewUrl });
+        }, file.type || 'image/jpeg', 0.92);
+      };
+      img.onerror = (err) => {
+        URL.revokeObjectURL(url);
+        reject(err);
+      };
+      img.src = url;
+    });
+  };
+
+  const onFilesSelected = async (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-    const prepared = files.map((file) => ({ file, url: URL.createObjectURL(file), id: Math.random().toString(36).slice(2) }));
-    setNewImages((prev) => [...prev, ...prepared]);
+    try {
+      const processed = await Promise.all(files.map((f) => addWatermarkToImage(f, watermarkText)));
+      const prepared = processed.map(({ file, previewUrl }) => ({ file, url: previewUrl, id: Math.random().toString(36).slice(2) }));
+      setNewImages((prev) => [...prev, ...prepared]);
+    } catch (err) {
+      toast.error('Failed to process images');
+    }
   };
 
   const removeExistingImage = (id) => {
@@ -442,7 +512,12 @@ export default function EditCar() {
       <div className="card shadow-sm p-4">
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h3 className="m-0">Edit Car</h3>
-          <button className="btn btn-secondary btn-sm" onClick={() => navigate(-1)}>Back</button>
+          <button className="btn btn-secondary btn-sm d-inline-flex align-items-center gap-1" onClick={() => navigate(-1)}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+              <path fillRule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z" />
+            </svg>
+            Back
+          </button>
         </div>
         <form onSubmit={onSubmit}>
           <div className="row g-3">
@@ -502,7 +577,7 @@ export default function EditCar() {
                   />
                 </div>
               )}
-              <small className="text-muted">{colorHex}</small>
+              {/* <small className="text-muted">{colorHex}</small> */}
             </div>
             <div className="col-md-6">
               <label className="form-label">Chassis Number</label>
@@ -531,14 +606,28 @@ export default function EditCar() {
               <label className="form-label">Rent Price</label>
               <input className="form-control" type="number" name="rent_price" value={form.rent_price} onChange={onChange} />
             </div>
-            <div className="col-md-6 d-flex align-items-end">
-              <div className="form-check">
-                <input className="form-check-input" type="checkbox" id="available_for_sale" name="available_for_sale" checked={form.available_for_sale} onChange={onChange} />
-                <label className="form-check-label" htmlFor="available_for_sale">Available for sale</label>
-              </div>
-            </div>
 
+            <div className="col-md-6">
+              <label className="form-label">Watermark Text</label>
+              <input
+                className="form-control mb-2"
+                placeholder="Enter watermark text"
+                value={watermarkText}
+                onChange={(e) => setWatermarkText(e.target.value)}
+              />
+              {/* <div className="form-check mb-2">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="full_screen_watermark_edit"
+                  checked={fullScreenWatermark}
+                  onChange={(e) => setFullScreenWatermark(e.target.checked)}
+                />
+                <label className="form-check-label" htmlFor="full_screen_watermark_edit">Full-screen watermark</label>
+              </div> */}
+            </div>
             <div className="col-12">
+
               <label className="form-label">Images</label>
               <input
                 type="file"
@@ -585,6 +674,12 @@ export default function EditCar() {
                     </button>
                   </div>
                 ))}
+              </div>
+            </div>
+            <div className="col-md-6 d-flex align-items-end">
+              <div className="form-check">
+                <input className="form-check-input" type="checkbox" id="available_for_sale" name="available_for_sale" checked={form.available_for_sale} onChange={onChange} />
+                <label className="form-check-label" htmlFor="available_for_sale">Available for sale</label>
               </div>
             </div>
           </div>

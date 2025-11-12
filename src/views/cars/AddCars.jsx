@@ -251,6 +251,55 @@ const CAR_CATEGORIES = [
         ]
     }
 ]
+
+const SearchableSelect = ({ options, value, onChange, placeholder = 'Select...', disabled }) => {
+    const [open, setOpen] = useState(false)
+    const [query, setQuery] = useState('')
+    const containerRef = useRef(null)
+
+    useEffect(() => {
+        const onDoc = (e) => {
+            if (containerRef.current && !containerRef.current.contains(e.target)) setOpen(false)
+        }
+        document.addEventListener('mousedown', onDoc)
+        return () => document.removeEventListener('mousedown', onDoc)
+    }, [])
+
+    const filtered = (options || []).filter(opt => (opt || '').toLowerCase().includes(query.toLowerCase()))
+
+    const handleSelect = (opt) => {
+        onChange({ target: { name: undefined, value: opt, type: 'text' } })
+        setQuery('')
+        setOpen(false)
+    }
+
+    return (
+        <div ref={containerRef} className="position-relative">
+            <div className="d-flex align-items-center">
+                <input
+                    className="form-control"
+                    placeholder={placeholder}
+                    value={open ? query : (value || '')}
+                    onChange={(e) => { setQuery(e.target.value); if (!open) setOpen(true) }}
+                    onFocus={() => setOpen(true)}
+                    readOnly={false}
+                    disabled={disabled}
+                />
+            </div>
+            {open && !disabled && (
+                <div className="border rounded mt-1 bg-white position-absolute w-100" style={{ zIndex: 1000, maxHeight: 220, overflowY: 'auto' }}>
+                    {filtered.length === 0 && <div className="p-2 text-muted">No results</div>}
+                    {filtered.map(opt => (
+                        <button key={opt} type="button" className="btn w-100 text-start" onClick={() => handleSelect(opt)}>
+                            {opt}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    )
+}
+
 const AddCars = () => {
     const navigate = useNavigate()
     const [formData, setFormData] = useState({
@@ -271,6 +320,8 @@ const AddCars = () => {
     const [showColorPicker, setShowColorPicker] = useState(false)
     const colorPickerRef = useRef(null)
     const inputRef = useRef(null)
+    const [watermarkText, setWatermarkText] = useState('')
+    const [fullScreenWatermark, setFullScreenWatermark] = useState(true)
 
     // Close color picker when clicking outside
     useEffect(() => {
@@ -298,27 +349,109 @@ const AddCars = () => {
             }))
             return
         }
+        if (name === 'rent_price') {
+            // Disallow negative and leading plus/minus; keep raw string to allow empty
+            const sanitized = (value ?? '').toString().replace(/[+\-]/g, '')
+            setFormData((prev) => ({
+                ...prev,
+                rent_price: sanitized
+            }))
+            return
+        }
         setFormData((prev) => ({
             ...prev,
             [name]: type === 'checkbox' ? checked : value
         }))
     }
 
-    const handleFileChange = (e) => {
+    const addWatermarkToImage = (file, text) => {
+        return new Promise((resolve, reject) => {
+            const img = new Image()
+            const url = URL.createObjectURL(file)
+            img.onload = () => {
+                const canvas = document.createElement('canvas')
+                canvas.width = img.naturalWidth || img.width
+                canvas.height = img.naturalHeight || img.height
+                const ctx = canvas.getContext('2d')
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+
+                if (text && text.trim()) {
+                    if (fullScreenWatermark) {
+                        const baseSize = Math.min(canvas.width, canvas.height)
+                        const fontSize = Math.max(16, Math.round(baseSize * 0.06))
+                        const spacing = Math.round(fontSize * 4)
+                        const padX = Math.round(canvas.width * 0.06)
+                        ctx.save()
+                        ctx.translate(canvas.width / 2, canvas.height / 2)
+                        ctx.rotate(-Math.PI / 6)
+                        ctx.font = `${fontSize}px sans-serif`
+                        ctx.textAlign = 'center'
+                        ctx.textBaseline = 'middle'
+                        for (let y = -canvas.height; y <= canvas.height; y += spacing) {
+                            for (let x = -canvas.width + padX; x <= canvas.width - padX; x += spacing) {
+                                ctx.strokeStyle = 'rgba(0,0,0,0.15)'
+                                ctx.lineWidth = Math.max(1, Math.round(fontSize / 14))
+                                ctx.strokeText(text, x, y)
+                                ctx.fillStyle = 'rgba(255,255,255,0.15)'
+                                ctx.fillText(text, x, y)
+                            }
+                        }
+                        ctx.restore()
+                    } else {
+                        const margin = Math.max(10, Math.round(Math.min(canvas.width, canvas.height) * 0.02))
+                        const fontSize = Math.max(16, Math.round(canvas.width * 0.04))
+                        ctx.font = `${fontSize}px sans-serif`
+                        ctx.textAlign = 'right'
+                        ctx.textBaseline = 'bottom'
+                        const x = canvas.width - margin
+                        const y = canvas.height - margin
+                        ctx.fillStyle = 'rgba(0,0,0,0.35)'
+                        ctx.fillText(text, x + 2, y + 2)
+                        ctx.fillStyle = 'rgba(255,255,255,0.7)'
+                        ctx.fillText(text, x, y)
+                    }
+                }
+
+                canvas.toBlob((blob) => {
+                    URL.revokeObjectURL(url)
+                    if (!blob) return reject(new Error('Failed to create blob'))
+                    const watermarkedFile = new File([blob], file.name, { type: blob.type || file.type })
+                    const previewUrl = URL.createObjectURL(blob)
+                    resolve({ file: watermarkedFile, previewUrl })
+                }, file.type || 'image/jpeg', 0.92)
+            }
+            img.onerror = (err) => {
+                URL.revokeObjectURL(url)
+                reject(err)
+            }
+            img.src = url
+        })
+    }
+
+    const handleFileChange = async (e) => {
         const files = Array.from(e.target.files || [])
         if (files.length === 0) return
 
-        const newImagePreviews = files.map(file => ({
-            id: URL.createObjectURL(file),
-            file,
-            url: URL.createObjectURL(file)
-        }))
+        try {
+            const processed = await Promise.all(
+                files.map(f => addWatermarkToImage(f, watermarkText))
+            )
 
-        setImagePreviews(prev => [...prev, ...newImagePreviews])
-        setFormData(prev => ({
-            ...prev,
-            images: [...prev.images, ...newImagePreviews.map(p => p.file)]
-        }))
+            const newImagePreviews = processed.map(({ file, previewUrl }) => ({
+                id: previewUrl,
+                file,
+                url: previewUrl
+            }))
+
+            setImagePreviews(prev => [...prev, ...newImagePreviews])
+            setFormData(prev => ({
+                ...prev,
+                images: [...prev.images, ...newImagePreviews.map(p => p.file)]
+            }))
+        } catch (err) {
+            toast.error('Failed to process images')
+            // no further action
+        }
     }
 
     const removeImage = useCallback((index) => {
@@ -425,34 +558,24 @@ const AddCars = () => {
                             {/* Type */}
                             <div className="col-md-6">
                                 <label className="form-label">Type</label>
-                                <select
-                                    className="form-select"
-                                    name="type"
+                                <SearchableSelect
+                                    options={CAR_CATEGORIES.map(cat => cat.type)}
                                     value={formData.type}
-                                    onChange={handleChange}
-                                >
-                                    <option value="">Select type</option>
-                                    {CAR_CATEGORIES.map(cat => (
-                                        <option key={cat.type} value={cat.type}>{cat.type}</option>
-                                    ))}
-                                </select>
+                                    onChange={(e) => handleChange({ target: { name: 'type', value: e.target.value, type: 'text' } })}
+                                    placeholder="Select type"
+                                />
                             </div>
 
                             {/* Car Name (dependent) */}
                             <div className="col-md-6">
                                 <label className="form-label">Car</label>
-                                <select
-                                    className="form-select"
-                                    name="name"
+                                <SearchableSelect
+                                    options={filteredCars}
                                     value={formData.name}
-                                    onChange={handleChange}
+                                    onChange={(e) => handleChange({ target: { name: 'name', value: e.target.value, type: 'text' } })}
+                                    placeholder={formData.type ? 'Select car' : 'Select type first'}
                                     disabled={!formData.type}
-                                >
-                                    <option value="">{formData.type ? 'Select car' : 'Select type first'}</option>
-                                    {filteredCars.map(car => (
-                                        <option key={car} value={car}>{car}</option>
-                                    ))}
-                                </select>
+                                />
                             </div>
 
                             {/* Source Dropdown */}
@@ -571,8 +694,8 @@ const AddCars = () => {
                                 </select>
                             </div>
 
-                            {/* Rent Price */}
-                            <div className="col-md-6">
+                           
+  <div className="col-md-12">
                                 <label className="form-label">Rent Price</label>
                                 <input
                                     type="number"
@@ -581,10 +704,36 @@ const AddCars = () => {
                                     name="rent_price"
                                     value={formData.rent_price}
                                     onChange={handleChange}
+                                    min={0}
+                                    inputMode="decimal"
+                                    onKeyDown={(e) => {
+                                        if (['-', '+', 'e', 'E'].includes(e.key)) {
+                                            e.preventDefault()
+                                        }
+                                    }}
                                 />
                             </div>
-
                             <div className="col-md-12">
+                                <label className="form-label">Watermark Text</label>
+                                <input
+                                    type="text"
+                                    className="form-control mb-2"
+                                    placeholder="Enter watermark text"
+                                    value={watermarkText}
+                                    onChange={(e) => setWatermarkText(e.target.value)}
+                                />
+                                {/* <div className="form-check mb-2">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        id="full_screen_watermark"
+                                        checked={fullScreenWatermark}
+                                        onChange={(e) => setFullScreenWatermark(e.target.checked)}
+                                    />
+                                    <label className="form-check-label" htmlFor="full_screen_watermark">
+                                        Full-screen watermark
+                                    </label>
+                                </div> */}
                                 <label className="form-label">Car Images</label>
                                 <input
                                     type="file"
@@ -615,7 +764,8 @@ const AddCars = () => {
                                     ))}
                                 </div>
                             </div>
-
+ {/* Rent Price */}
+                          
                             <div className="col-md-6 d-flex align-items-start mt-1 pt-2">
                                 <div className="form-check">
                                     <input

@@ -6,6 +6,8 @@ import { Modal, Carousel } from 'react-bootstrap'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import { SketchPicker } from 'react-color'
 import { useNavigate } from 'react-router-dom'
+import { pdf } from '@react-pdf/renderer'
+import { SingleCarDocument, CarsListDocument } from '../../pdf/CarsPdf'
 
 const ListCars = () => {
     const { user } = useSelector((state) => state.auth);
@@ -44,10 +46,30 @@ const ListCars = () => {
         total: 0,
         lastPage: 1
     })
+    const [downloadingAll, setDownloadingAll] = useState(false)
     // Color picker state for Edit modal
     const [showColorPickerEdit, setShowColorPickerEdit] = useState(false)
     const colorPickerRefEdit = useRef(null)
     const inputRefEdit = useRef(null)
+
+    // Convert rgb/rgba strings like "rgb(255, 0, 0)" or "rgba(255, 0, 0, 0.5)" to hex "#FF0000"
+    const normalizeColorForPdf = (value) => {
+        if (!value || typeof value !== 'string') return value || '';
+        const v = value.trim();
+        // Already hex
+        if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v)) return v.toUpperCase();
+        // rgb/rgba matcher
+        const m = v.match(/^rgba?\s*\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})(?:\s*,\s*(0|0?\.\d+|1))?\s*\)$/i);
+        if (m) {
+            const r = Math.max(0, Math.min(255, parseInt(m[1], 10)));
+            const g = Math.max(0, Math.min(255, parseInt(m[2], 10)));
+            const b = Math.max(0, Math.min(255, parseInt(m[3], 10)));
+            const toHex = (n) => n.toString(16).padStart(2, '0').toUpperCase();
+            return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+        }
+        // Fallback: return as-is
+        return v;
+    }
 
     const fetchCars = async (page = 1, search = '') => {
         try {
@@ -123,129 +145,21 @@ const ListCars = () => {
         setActionMenuId(prev => (prev === id ? null : id))
     }
 
-    const handleDownloadPdf = (car) => {
-        const win = window.open('', '_blank')
-        if (!win) return
-        const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Car ${car?.name || ''} - Details</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 24px; }
-    body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f5f7fa;
-    color: #333;
-    padding: 20px;
-  }
-
-  .car-card {
-    max-width: 800px;
-    margin: 0 auto;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-    overflow: hidden;
-    padding: 30px;
-  }
-
-  .car-card h1 {
-    font-size: 28px;
-    margin-bottom: 20px;
-    color: #222;
-    text-align: center;
-  }
-
-  .car-meta {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px 20px;
-    margin-bottom: 25px;
-  }
-
-  .meta {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid #eee;
-  }
-
-  .meta .label {
-    font-weight: 600;
-    color: #555;
-  }
-
-  .meta .value {
-    color: #111;
-  }
-
-  .images {
-    display: flex;
-    gap: 15px;
-    overflow-x: auto;
-    padding-top: 10px;
-  }
-
-  .images img {
-    width: 200px;
-    height: 120px;
-    object-fit: cover;
-    border-radius: 8px;
-    transition: transform 0.3s;
-    cursor: pointer;
-  }
-
-  .images img:hover {
-    transform: scale(1.05);
-  }
-
-  /* Scrollbar styling */
-  .images::-webkit-scrollbar {
-    height: 8px;
-  }
-
-  .images::-webkit-scrollbar-thumb {
-    background: #aaa;
-    border-radius: 4px;
-  }
-    h1 { margin: 0 0 12px; font-size: 20px; }
-    .meta { margin: 4px 0; }
-    .label { color: #666; width: 140px; display: inline-block; }
-    .value { color: #000; }
-    .images { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
-    .images img { width: 180px; height: 120px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; }
-  </style>
-  </head>
-  <body>
-  
-
-<div class="car-card">
-  <h1>Car Details</h1>
-  <div class="car-meta">
-    <div class="meta"><span class="label">Name:</span><span class="value">${car?.name || '-'}</span></div>
-    <div class="meta"><span class="label">Source:</span><span class="value">${car?.source || '-'}</span></div>
-    <div class="meta"><span class="label">Model:</span><span class="value">${car?.model || '-'}</span></div>
-    <div class="meta"><span class="label">Colour:</span><span class="value">${car?.colour || '-'}</span></div>
-    <div class="meta"><span class="label">Chassis No:</span><span class="value">${car?.chasis_number || '-'}</span></div>
-    <div class="meta"><span class="label">Status:</span><span class="value">${car?.status || '-'}</span></div>
-    <div class="meta"><span class="label">Rent Type:</span><span class="value">${(car?.rent_period || '').toString().replaceAll('_',' ')}</span></div>
-    <div class="meta"><span class="label">Rent Price:</span><span class="value">${car?.rent_price || '-'}</span></div>
-  </div>
-  <div class="images">
-    ${(car?.image_urls || (car?.images?.[0]?.image_urls) || []).map((u) => typeof u === 'string' ? u : (u?.url ?? u)).map((src) => `<img src="${src}" />`).join('')}
-  </div>
-</div>
-
-    <script>
-      window.onload = () => { window.print(); setTimeout(() => window.close(), 200); };
-    </script>
-  </body>
-</html>`
-        win.document.write(html)
-        win.document.close()
+    const handleDownloadPdf = async (car) => {
+        try {
+            const blob = await pdf(<SingleCarDocument car={car} />).toBlob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `car-${car?.id || 'details'}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        } catch (e) {
+            console.error('Failed to generate car PDF', e);
+            toast.error('Failed to generate PDF');
+        }
     }
 
     const handlePageChange = (page) => {
@@ -401,8 +315,14 @@ const ListCars = () => {
     }
 
     const handleViewImages = (car) => {
-        const urls = car.image_urls || (car.images?.[0]?.image_urls) || [];
-        const images = Array.isArray(urls) ? urls.map(url => ({ url })) : [];
+        const rawUrls = car.image_urls || (car.images?.[0]?.image_urls) || [];
+        const normalized = Array.isArray(rawUrls)
+            ? rawUrls
+                .map((u) => (typeof u === 'string' ? u : (u?.url ?? '')))
+                .map((s) => (s || '').replace(/^http:\/\//i, 'https://'))
+                .filter(Boolean)
+            : [];
+        const images = normalized.map((url) => ({ url }));
         setCurrentCarImages(images);
         // Initialize loading state for all images
         const initialLoadingState = {};
@@ -427,87 +347,25 @@ const ListCars = () => {
     }
 
     const handleDownloadAllPdf = async () => {
+        if (downloadingAll) return;
+        setDownloadingAll(true);
         try {
-            const { data } = await axios.get('/cars', {
-                params: {
-                    page: 1,
-                    per_page: 10000,
-                    search: searchTerm,
-                    sort_by: 'id',
-                    sort_order: 'desc'
-                }
-            })
-            const rows = Array.isArray(data) ? data : (data?.data || [])
-            const win = window.open('', '_blank')
-            if (!win) return
-            const html = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Cars List</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 24px; color:#111; }
-    h1 { margin: 0 0 16px; font-size: 20px; }
-    .stamp { color:#666; font-size:12px; margin-bottom:12px; }
-    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background: #f5f7fa; }
-    .status { display:inline-block; padding:2px 6px; border-radius:999px; font-size:11px; color:#fff; }
-    .status.available { background:#198754; }
-    .status.rented { background:#ffc107; color:#111; }
-    .status.maintenance { background:#0dcaf0; }
-    @media print { @page { margin: 12mm; } }
-  </style>
-  </head>
-  <body>
-    <h1>Cars List</h1>
-    <div class="stamp">Generated: ${new Date().toLocaleString()}</div>
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Name</th>
-          <th>Source</th>
-          <th>Model</th>
-          <th>Colour</th>
-          <th>Chassis No</th>
-          <th>Status</th>
-          <th>Rent Type</th>
-          <th>Rent Price</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${rows.map((car, idx) => {
-                const s = (car?.status || '').toString().toLowerCase()
-                const statusClass = s.includes('maintenance') ? 'maintenance' : s
-                return `<tr>
-                  <td>${idx + 1}</td>
-                  <td>${car?.name ?? '-'}</td>
-                  <td>${car?.source ?? '-'}</td>
-                  <td>${car?.model ?? '-'}</td>
-                  <td>${car?.colour ?? '-'}</td>
-                  <td>${car?.chasis_number ?? '-'}</td>
-                  <td><span class="status ${statusClass}">${car?.status ?? '-'}</span></td>
-                  <td>${(car?.rent_period || '').toString().replaceAll('_',' ')}</td>
-                  <td>${car?.rent_price ?? '-'}</td>
-                </tr>`
-            }).join('')}
-      </tbody>
-    </table>
-    <script>
-      window.onload = () => { window.print(); setTimeout(() => window.close(), 200); };
-    </script>
-  </body>
-</html>`
-            win.document.write(html)
-            win.document.close()
+            const response = await axios.get('/cars/export/pdf');
+            const pdfUrl = response.data.url;
+            window.open(pdfUrl, '_blank');
+            const a = document.createElement('a');
+            a.href = pdfUrl;
+            a.download = 'cars-list.pdf';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
         } catch (e) {
-            console.error('Failed to build cars PDF', e)
-            toast.error(e?.response?.data?.message || e.message || 'Failed to download')
+            console.error('Failed to download cars PDF from backend', e);
+            toast.error(e?.response?.data?.message || e.message || 'Failed to download');
+        } finally {
+            setDownloadingAll(false);
         }
-    }
-
+    };
     return (
         <>
             <div className="container py-4">
@@ -517,12 +375,13 @@ const ListCars = () => {
                             Car List
                         </h3>
                         <div className="d-flex align-items-center gap-2 g-2 mb-3">
-                            <button type="button" className="btn btn-outline-secondary d-flex align-items-center gap-2" onClick={handleDownloadAllPdf} title="Download all as PDF">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                                    <path d="M.5 9.9A5.5 5.5 0 0 1 9.9.5a5.5 5.5 0 0 1 5.6 8.9H13V8a5 5 0 1 0-10 0v1.4H.5z"/>
-                                    <path d="M5 10.5a.5.5 0 0 1 .5-.5H7V6.5a.5.5 0 0 1 1 0V10h1.5a.5.5 0 0 1 .354.854l-2 2a.5.5 0 0 1-.708 0l-2-2A.5.5 0 0 1 5 10.5z"/>
-                                </svg>
-                                Download
+                            <button type="button" className="btn btn-outline-secondary d-flex align-items-center gap-2" onClick={handleDownloadAllPdf} title="Download all as PDF" disabled={downloadingAll} aria-busy={downloadingAll}>
+
+                                {downloadingAll ? <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> : <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M.5 9.9A5.5 5.5 0 0 1 9.9.5a5.5 5.5 0 0 1 5.6 8.9H13V8a5 5 0 1 0-10 0v1.4H.5z" />
+                                    <path d="M5 10.5a.5.5 0 0 1 .5-.5H7V6.5a.5.5 0 0 1 1 0V10h1.5a.5.5 0 0 1 .354.854l-2 2a.5.5 0 0 1-.708 0l-2-2A.5.5 0 0 1 5 10.5z" />
+                                </svg>}
+                                {downloadingAll ? 'Downloading...' : 'Download'}
                             </button>
                             <div>
                                 <input
@@ -546,7 +405,7 @@ const ListCars = () => {
                                     <th>Name</th>
                                     <th>Source</th>
                                     <th>Model</th>
-                                    <th>Colour</th>
+                                    <th>Color</th>
                                     <th>Chassis No</th>
                                     <th>Status</th>
                                     <th>Rent Type</th>
@@ -595,7 +454,22 @@ const ListCars = () => {
                                             <td>{car.name}</td>
                                             <td>{car.source}</td>
                                             <td>{car.model}</td>
-                                            <td>{car.colour}</td>
+                                            <td>
+                                                <div
+                                                    title={car.colour || ''}
+                                                    style={{
+                                                        width: '50px',
+                                                        height: '24px',
+                                                        margin: '0 auto',
+                                                        display: 'flex',
+
+                                                        borderRadius: '4px',
+                                                        border: '1px solid #dee2e6',
+                                                        backgroundColor: car.colour || 'transparent',
+                                                        justifyContent: 'center'
+                                                    }}
+                                                />
+                                            </td>
                                             <td>{car.chasis_number}</td>
                                             <td>
                                                 <div className="badge-wrapp d-flex align-items-center justify-content-center">
@@ -624,7 +498,7 @@ const ListCars = () => {
                                                 >
                                                     {/* Ellipsis icon */}
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                                                        <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
+                                                        <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" />
                                                     </svg>
                                                 </button>
                                                 {actionMenuId === car.id && (
@@ -655,8 +529,8 @@ const ListCars = () => {
                                                         </button>
                                                         <button className="dropdown-item d-flex align-items-center gap-2" onClick={() => handleDownloadPdf(car)}>
                                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                                                <path d="M.5 9.9A5.5 5.5 0 0 1 9.9.5a5.5 5.5 0 0 1 5.6 8.9H13V8a5 5 0 1 0-10 0v1.4H.5z"/>
-                                                                <path d="M5 10.5a.5.5 0 0 1 .5-.5H7V6.5a.5.5 0 0 1 1 0V10h1.5a.5.5 0 0 1 .354.854l-2 2a.5.5 0 0 1-.708 0l-2-2A.5.5 0 0 1 5 10.5z"/>
+                                                                <path d="M.5 9.9A5.5 5.5 0 0 1 9.9.5a5.5 5.5 0 0 1 5.6 8.9H13V8a5 5 0 1 0-10 0v1.4H.5z" />
+                                                                <path d="M5 10.5a.5.5 0 0 1 .5-.5H7V6.5a.5.5 0 0 1 1 0V10h1.5a.5.5 0 0 1 .354.854l-2 2a.5.5 0 0 1-.708 0l-2-2A.5.5 0 0 1 5 10.5z" />
                                                             </svg>
                                                             Download PDF
                                                         </button>
