@@ -46,6 +46,7 @@ const ListCars = () => {
         total: 0,
         lastPage: 1
     })
+    const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 })
     const [downloadingAll, setDownloadingAll] = useState(false)
     // Color picker state for Edit modal
     const [showColorPickerEdit, setShowColorPickerEdit] = useState(false)
@@ -142,6 +143,12 @@ const ListCars = () => {
 
     const toggleActionMenu = (e, id) => {
         e.stopPropagation()
+        const rect = e.currentTarget.getBoundingClientRect()
+        const minWidth = 180
+        const padding = 8
+        const left = Math.max(8, Math.min(window.innerWidth - minWidth - 8, rect.right + window.scrollX - minWidth))
+        const top = rect.bottom + window.scrollY + padding
+        setMenuPosition({ top, left })
         setActionMenuId(prev => (prev === id ? null : id))
     }
 
@@ -316,13 +323,22 @@ const ListCars = () => {
 
     const handleViewImages = (car) => {
         const rawUrls = car.image_urls || (car.images?.[0]?.image_urls) || [];
+        const apiBase = (axios?.defaults?.baseURL || '').replace(/\/?api\/?$/i, '');
+        const toAbsolute = (s) => {
+            const url = (s || '').trim();
+            if (!url) return '';
+            if (/^https?:\/\//i.test(url)) return url; // already absolute
+            const base = apiBase || window.location.origin;
+            return `${base}${url.startsWith('/') ? '' : '/'}${url}`;
+        };
         const normalized = Array.isArray(rawUrls)
             ? rawUrls
                 .map((u) => (typeof u === 'string' ? u : (u?.url ?? '')))
-                .map((s) => (s || '').replace(/^http:\/\//i, 'https://'))
+                .map(toAbsolute)
                 .filter(Boolean)
             : [];
         const images = normalized.map((url) => ({ url }));
+        console.log('images api', images)
         setCurrentCarImages(images);
         // Initialize loading state for all images
         const initialLoadingState = {};
@@ -441,14 +457,70 @@ const ListCars = () => {
                                             <td>
                                                 <button
                                                     type="button"
-                                                    className="btn bg-secondary text-white me-2"
+                                                    className=" border-0 bg-transparent  text-white mx-auto d-flex align-items-center justify-content-center"
                                                     disabled={!car.images?.[0]?.image_urls?.length}
                                                     onClick={() => handleViewImages(car)}
                                                     aria-label="View Images"
                                                 >
+                                                    {
+                                                        !car.images?.[0]?.image_urls?.length ? (
+                                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" width="40" height="40" role="img" aria-label="Stylized car">
+                                                                {/* <!-- wheels --> */}
+                                                                <circle cx="50" cy="75" r="12" fill="#222" />
+                                                                <circle cx="150" cy="75" r="12" fill="#222" />
+                                                                <circle cx="50" cy="75" r="6" fill="#bbb" />
+                                                                <circle cx="150" cy="75" r="6" fill="#bbb" />
+
+                                                                {/* <!-- body --> */}
+                                                                <rect x="18" y="40" rx="10" ry="10" width="164" height="28" fill="#c0dfffff" />
+
+                                                                {/* <!-- roof & windows --> */}
+                                                                <path d="M40 40 Q60 18 100 18 Q140 18 160 40 Z" fill="#bcdeffff" />
+                                                                <rect x="68" y="26" width="64" height="22" rx="4" ry="4" fill="#E3F2FD" />
+                                                                <rect x="72" y="30" width="24" height="14" rx="2" ry="2" fill="#BBDEFB" />
+                                                                <rect x="104" y="30" width="24" height="14" rx="2" ry="2" fill="#BBDEFB" />
+
+                                                                {/* <!-- bumper & details --> */}
+                                                                <rect x="12" y="56" width="18" height="8" rx="3" fill="#abcef7ffff" />
+                                                                <rect x="170" y="56" width="18" height="8" rx="3" fill="#a8d0ffff" />
+                                                                <circle cx="30" cy="62" r="2.5" fill="#FFF9C4" />
+                                                                <circle cx="170" cy="62" r="2.5" fill="#FFF9C4" />
+
+                                                                {/* <!-- subtle shadow --> */}
+                                                                <ellipse cx="100" cy="82" rx="64" ry="8" fill="#000" opacity="0.08" />
+                                                            </svg>
+                                                        ) : (
+                                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" width="40" height="40" role="img" aria-label="Stylized car">
+                                                                {/* <!-- wheels --> */}
+                                                                <circle cx="50" cy="75" r="12" fill="#222" />
+                                                                <circle cx="150" cy="75" r="12" fill="#222" />
+                                                                <circle cx="50" cy="75" r="6" fill="#bbb" />
+                                                                <circle cx="150" cy="75" r="6" fill="#bbb" />
+
+                                                                {/* <!-- body --> */}
+                                                                <rect x="18" y="40" rx="10" ry="10" width="164" height="28" fill="#1976D2" />
+
+                                                                {/* <!-- roof & windows --> */}
+                                                                <path d="M40 40 Q60 18 100 18 Q140 18 160 40 Z" fill="#1976D2" />
+                                                                <rect x="68" y="26" width="64" height="22" rx="4" ry="4" fill="#E3F2FD" />
+                                                                <rect x="72" y="30" width="24" height="14" rx="2" ry="2" fill="#BBDEFB" />
+                                                                <rect x="104" y="30" width="24" height="14" rx="2" ry="2" fill="#BBDEFB" />
+
+                                                                {/* <!-- bumper & details --> */}
+                                                                <rect x="12" y="56" width="18" height="8" rx="3" fill="#1565C0" />
+                                                                <rect x="170" y="56" width="18" height="8" rx="3" fill="#1565C0" />
+                                                                <circle cx="30" cy="62" r="2.5" fill="#FFF9C4" />
+                                                                <circle cx="170" cy="62" r="2.5" fill="#FFF9C4" />
+
+                                                                {/* <!-- subtle shadow --> */}
+                                                                <ellipse cx="100" cy="82" rx="64" ry="8" fill="#000" opacity="0.08" />
+                                                            </svg>
+
+                                                        )
+                                                    }
 
 
-                                                    images
+
                                                 </button>
                                             </td>
                                             <td>{car.name}</td>
@@ -503,8 +575,8 @@ const ListCars = () => {
                                                 </button>
                                                 {actionMenuId === car.id && (
                                                     <div
-                                                        className="dropdown-menu show"
-                                                        style={{ display: 'block', position: 'absolute', right: 0, top: '100%', minWidth: 160 }}
+                                                        className="dropdown-menu show shadow border-0 rounded-3 p-2"
+                                                        style={{ display: 'block', position: 'fixed', top: menuPosition.top, left: menuPosition.left, minWidth: 180, zIndex: 2000 }}
                                                         onClick={(e) => e.stopPropagation()}
                                                     >
                                                         <button className="dropdown-item d-flex align-items-center gap-2" onClick={() => handleView(car)}>
@@ -831,12 +903,14 @@ const ListCars = () => {
                 <Modal.Body>
                     {currentCarImages.length > 0 ? (
                         <Carousel
+                            key={currentCarImages.map(i => i?.url || '').join('|')}
                             controls={currentCarImages.length > 1}
                             indicators={currentCarImages.length > 1}
                         >
                             {currentCarImages.map((img, idx) => (
                                 <Carousel.Item key={idx}>
-                                    <div className="position-relative" style={{ minHeight: '300px' }}>
+                                    {console.log('img', img?.url)}
+                                    <div className="position-relative d-flex align-items-center justify-content-center" style={{height: '500px' }}>
                                         {loadingImages[idx] && (
                                             <div className="position-absolute top-50 start-50 translate-middle">
                                                 <div className="spinner-border text-primary" role="status">
@@ -845,16 +919,16 @@ const ListCars = () => {
                                             </div>
                                         )}
                                         <img
-                                            className="d-block w-100"
-                                            src={img.url}
+                                            src={img?.url || ''}
                                             alt={`Car view ${idx + 1}`}
                                             style={{
-                                                height: '500px',
-                                                width: '500px',
+                                                maxHeight: '100%',
+                                                maxWidth: '100%',
 
-                                                objectFit: 'cover',
-                                                opacity: loadingImages[idx] ? 0 : 1,
-                                                transition: 'opacity 0.3s ease-in-out'
+                                                width: '100%',
+                                                height: '100%',
+                                                objectFit: 'contain',
+                                                backgroundColor: '#f8f9fa',
                                             }}
                                             onLoad={() => handleImageLoad(idx)}
                                             onError={() => handleImageLoad(idx)}

@@ -72,7 +72,7 @@ const ViewCar = () => {
         <div>
           <Button variant="secondary" size="sm" onClick={() => navigate(-1)} className="d-inline-flex align-items-center gap-1">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-              <path fillRule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+              <path fillRule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z" />
             </svg>
             Back
           </Button>
@@ -80,17 +80,26 @@ const ViewCar = () => {
       </div>
 
       <div className="row g-4">
-       
+
         <div className="col-lg-12">
           <div className="card p-3 shadow-sm">
             <div className="row g-3">
+              <div className="col-6"><strong>Type: </strong> {car?.type}</div>
               <div className="col-6"><strong>Name: </strong> {car.name}</div>
               <div className="col-6"><strong>Model: </strong> {car?.model ? (car.model.charAt(0).toUpperCase() + car.model.slice(1)) : ''}</div>
               <div className="col-6"><strong>Source: </strong> {car.source ? (car.source.charAt(0).toUpperCase() + car.source.slice(1)) : ''}</div>
               <div className="col-6"><strong>Chassis No: </strong> {car.chasis_number}</div>
+              <div className="col-6">
+                <strong>Rent Type: </strong>
+                {(car.rent_period || '')
+                  .toLowerCase()
+                  .split('_')
+                  .map(w => (w ? w[0].toUpperCase() + w.slice(1) : ''))
+                  .join(' ')
+                }
+              </div>
               <div className="col-6"><strong>Status: </strong> <Badge bg={car.status === 'available' ? 'success' : car.status === 'rented' ? 'warning' : 'secondary'}>{car.status ? (car.status.charAt(0).toUpperCase() + car.status.slice(1)) : ''}</Badge></div>
               <div className="col-6"><strong>Colour:</strong> <span className="ms-2 align-middle" style={{ width: 50, height: 20, display: 'inline-block', background: car.colour, border: '1px solid #ddd', verticalAlign: 'middle' }} /> </div>
-              <div className="col-6"><strong>Rent Type: </strong>{car.rent_period.replaceAll('_', ' ') ? (car.rent_period.charAt(0).toUpperCase() + car.rent_period.slice(1)) : ''}</div>
               <div className="col-6"><strong>Rent Price: AED</strong>  {car.rent_price}</div>
               {/* <div className="col-12">
                 {isSuperAdmin && (
@@ -100,7 +109,7 @@ const ViewCar = () => {
             </div>
           </div>
         </div>
-         <div className="col-lg-12">
+        <div className="col-lg-12">
           {images.length > 0 ? (
             <div className="row g-3">
               {images.map((img, idx) => (

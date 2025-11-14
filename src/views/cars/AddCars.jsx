@@ -320,6 +320,7 @@ const AddCars = () => {
     const [showColorPicker, setShowColorPicker] = useState(false)
     const colorPickerRef = useRef(null)
     const inputRef = useRef(null)
+    const previewsRef = useRef([])
     const [watermarkText, setWatermarkText] = useState('')
     const [fullScreenWatermark, setFullScreenWatermark] = useState(true)
 
@@ -379,16 +380,20 @@ const AddCars = () => {
                     if (fullScreenWatermark) {
                         const baseSize = Math.min(canvas.width, canvas.height)
                         const fontSize = Math.max(16, Math.round(baseSize * 0.06))
-                        const spacing = Math.round(fontSize * 4)
-                        const padX = Math.round(canvas.width * 0.06)
                         ctx.save()
                         ctx.translate(canvas.width / 2, canvas.height / 2)
                         ctx.rotate(-Math.PI / 6)
                         ctx.font = `${fontSize}px sans-serif`
                         ctx.textAlign = 'center'
                         ctx.textBaseline = 'middle'
-                        for (let y = -canvas.height; y <= canvas.height; y += spacing) {
-                            for (let x = -canvas.width + padX; x <= canvas.width - padX; x += spacing) {
+                        // Measure text to avoid overlaps and compute spacing dynamically
+                        const metrics = ctx.measureText(text)
+                        const textWidth = Math.max(metrics.width || 0, fontSize * 2)
+                        const spacingX = Math.round(textWidth + fontSize * 1.5) // horizontal gap
+                        const spacingY = Math.round(fontSize * 3) // vertical gap
+                        const padX = Math.round(canvas.width * 0.06)
+                        for (let y = -canvas.height; y <= canvas.height; y += spacingY) {
+                            for (let x = -canvas.width + padX; x <= canvas.width - padX; x += spacingX) {
                                 ctx.strokeStyle = 'rgba(0,0,0,0.15)'
                                 ctx.lineWidth = Math.max(1, Math.round(fontSize / 14))
                                 ctx.strokeText(text, x, y)
@@ -473,11 +478,19 @@ const AddCars = () => {
         })
     }, [])
 
+    // Keep a ref of the latest previews for safe cleanup on unmount only
+    useEffect(() => {
+        previewsRef.current = imagePreviews
+    }, [imagePreviews])
+
+    // Revoke blob URLs only on unmount to avoid React 18 StrictMode double-effect issues
     useEffect(() => {
         return () => {
-            imagePreviews.forEach(preview => URL.revokeObjectURL(preview.url))
+            (previewsRef.current || []).forEach(preview => {
+                if (preview?.url?.startsWith('blob:')) URL.revokeObjectURL(preview.url)
+            })
         }
-    }, [imagePreviews])
+    }, [])
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -489,6 +502,7 @@ const AddCars = () => {
 
             // Add all form data
             const formDataToSend = {
+                type: formData.type,
                 name: formData.name,
                 source: formData.source,
                 model: formData.model,

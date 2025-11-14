@@ -2,18 +2,37 @@
 @import 'assets/scss/style';
 
 
- 
-.carousel-control-prev-icon, .leftControl, .carousel-control-next-icon, .rightControl { 
-        background: #79797954;
-    padding: 16px;
-    border-radius: 50%;
-    // color: #7b7b7b;
+
+
+.modal-header {
+   border-bottom: 1px solid #757575 !important;
 }
 
- .modal-header {
-    border-bottom: 1px solid #757575 !important;
- }
- a{
-    text-decoration: none !important;
+a {
+   text-decoration: none !important;
 
- }
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+   border-radius: 50%;
+
+
+   width: 30px !important;
+   height: 30px !important;
+   background: #79797954 !important;
+   top: 47% !important;
+
+}
+.carousel-control-next-icon, .carousel-control-prev-icon { 
+    width: 1rem !important;
+    height: 1rem !important;
+ 
+}
+.carousel-control-prev{
+   left: 15px !important;
+
+}
+.carousel-control-next {
+   right: 15px !important;
+}

@@ -371,15 +371,19 @@ export default function EditCar() {
           if (fullScreenWatermark) {
             const baseSize = Math.min(canvas.width, canvas.height);
             const fontSize = Math.max(24, Math.round(baseSize * 0.06));
-            const spacing = Math.round(fontSize * 4);
             ctx.save();
             ctx.translate(canvas.width / 2, canvas.height / 2);
             ctx.rotate(-Math.PI / 6);
             ctx.font = `${fontSize}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            for (let y = -canvas.height; y <= canvas.height; y += spacing) {
-              for (let x = -canvas.width; x <= canvas.width; x += spacing) {
+            // Measure text and compute adaptive spacing to avoid overlaps
+            const metrics = ctx.measureText(text);
+            const textWidth = Math.max(metrics.width || 0, fontSize * 2);
+            const spacingX = Math.round(textWidth + fontSize * 1.5); // horizontal gap
+            const spacingY = Math.round(fontSize * 3); // vertical gap
+            for (let y = -canvas.height; y <= canvas.height; y += spacingY) {
+              for (let x = -canvas.width; x <= canvas.width; x += spacingX) {
                 ctx.strokeStyle = 'rgba(0,0,0,0.15)';
                 ctx.lineWidth = Math.max(1, Math.round(fontSize / 14));
                 ctx.strokeText(text, x, y);
@@ -512,12 +516,17 @@ export default function EditCar() {
       <div className="card shadow-sm p-4">
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h3 className="m-0">Edit Car</h3>
-          <button className="btn btn-secondary btn-sm d-inline-flex align-items-center gap-1" onClick={() => navigate(-1)}>
+        <div className="d-flex gap-2">
+            <button className="btn btn-secondary btn-sm d-inline-flex align-items-center gap-1" onClick={() => navigate(-1)}>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
               <path fillRule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z" />
             </svg>
             Back
           </button>
+           <div className="d-flex justify-content-end">
+            <button type="submit" className="btn btn-primary" onClick={onSubmit} disabled={saving}>{saving ? 'Saving…' : 'Save Changes'}</button>
+          </div>
+        </div>
         </div>
         <form onSubmit={onSubmit}>
           <div className="row g-3">
@@ -683,9 +692,7 @@ export default function EditCar() {
               </div>
             </div>
           </div>
-          <div className="d-flex justify-content-end mt-3">
-            <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving…' : 'Save Changes'}</button>
-          </div>
+         
         </form>
       </div>
     </div>
