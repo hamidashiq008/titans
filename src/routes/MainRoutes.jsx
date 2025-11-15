@@ -3,6 +3,7 @@
 
 import { lazy, useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
 import AdminLayout from 'layouts/AdminLayout';
 import GuestLayout from 'layouts/GuestLayout';
@@ -25,15 +26,13 @@ const MaterialIcon = lazy(() => import('../views/ui-elements/icons/Material'));
 const Sample = lazy(() => import('../views/sample'));
 const Login = lazy(() => import('../views/auth/login'));
 const Register = lazy(() => import('../views/auth/register'));
-
-// ✅ Auth check helper (boolean)
-const isAuthed = () => !!localStorage.getItem('access_token');
+const Logout = lazy(() => import('../views/auth/Logout'));
 
 // ✅ Protected Route using useEffect to redirect unauthenticated
 const ProtectedRoute = ({ children }) => {
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
-  const authed = isAuthed();
+  const authed = !!useSelector((state) => state?.auth?.token);
 
   useEffect(() => {
     if (!authed) {
@@ -51,7 +50,7 @@ const ProtectedRoute = ({ children }) => {
 const PublicRoute = ({ children }) => {
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
-  const authed = isAuthed();
+  const authed = !!useSelector((state) => state?.auth?.token);
 
   useEffect(() => {
     if (authed) {
@@ -63,6 +62,12 @@ const PublicRoute = ({ children }) => {
   if (authed) return null;
   if (!ready) return null;
   return children;
+};
+
+// ✅ Index redirect that reacts to Redux auth state
+const IndexRedirect = () => {
+  const authed = !!useSelector((state) => state?.auth?.token);
+  return authed ? <Navigate to="/dashboard/sales" replace /> : <Navigate to="/auth/login" replace />;
 };
 
 
@@ -113,13 +118,11 @@ const MainRoutes = {
       ]
     },
 
-    // Redirect default "/" depending on auth state
-    {
-      index: true,
-      element: isAuthed()
-        ? <Navigate to="/dashboard/sales" replace />
-        : <Navigate to="/auth/login" replace />
-    }
+    // Direct Logout route (works regardless of auth wrappers)
+    { path: '/auth/logout', element: <Logout /> },
+
+    // Redirect default "/" depending on auth state (reactive)
+    { index: true, element: <IndexRedirect /> }
   ]
 };
 

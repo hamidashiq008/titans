@@ -1,5 +1,6 @@
 import axios from 'axios';
-
+import { store } from '../redux/store';
+import { logout } from '../redux/slices/AuthSlice';
 // Create axios instance with base URL
 const instance = axios.create({
     baseURL: 'https://titans-laravel.edexceledu.com/api',
@@ -13,7 +14,7 @@ const instance = axios.create({
 // Add request interceptor to add auth token
 instance.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+        const token = store.getState()?.auth?.token;
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -30,8 +31,7 @@ instance.interceptors.response.use(
     (error) => {
         if (error.response?.status === 401) {
             // Handle unauthorized access
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('token');
+              store.dispatch(logout());
             // window.location.href = '/auth/sign-in';
         }
         return Promise.reject(error);

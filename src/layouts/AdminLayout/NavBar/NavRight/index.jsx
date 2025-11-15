@@ -6,7 +6,9 @@ import { ListGroup, Dropdown, Form } from 'react-bootstrap';
 
 // third party
 import FeatherIcon from 'feather-icons-react';
-
+import { logout } from '../../../../redux/slices/AuthSlice';
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 // assets
 import avatar2 from 'assets/images/user/avatar-2.jpg';
 
@@ -16,6 +18,14 @@ export default function NavRight() {
   const { user } = useSelector((state) => state.auth);
   const userName = user?.name || 'User';
   const userRole = user?.role || 'User';
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const removeToken = () => {
+    dispatch(logout());
+    // localStorage.removeItem('token');
+    navigate('/auth/login');
+  }
 
   return (
     <ListGroup as="ul" bsPrefix=" " className="list-unstyled">
@@ -44,10 +54,7 @@ export default function NavRight() {
             {/* <Link to="/auth/signin-2" className="dropdown-item">
               <i className="feather icon-lock" /> Lock Screen
             </Link> */}
-            <Link to="#" className="dropdown-item" onClick={() => {
-              localStorage.removeItem('access_token');
-              window.location.href = '/auth/login';
-            }}>
+            <Link to="/auth/login" className="dropdown-item" onClick={() => {removeToken()}}>
               <i className="material-icons-two-tone">chrome_reader_mode</i> Logout
             </Link>
           </Dropdown.Menu>

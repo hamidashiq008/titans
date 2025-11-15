@@ -3,13 +3,37 @@ import { useSelector } from 'react-redux';
 
 const useMenuItems = () => {
   const { user } = useSelector((state) => state.auth);
-  const isSuperAdmin = useMemo(() => user?.role=== 'super-admin');
+  const isSuperAdmin = useMemo(() => user?.role === 'super-admin');
 
   const items = useMemo(() => {
-    // Guard while auth state is rehydrating or user not available yet
-    if (!user) return [];
+    // ===========================
+    // Not logged in: Only Login
+    // ===========================
+    if (!user) {
+      return [
+        {
+          id: 'auth',
+          title: 'Login',
+          type: 'group',
+          icon: 'material-icons-two-tone',
+          iconname: 'login',
+          children: [
+            {
+              id: 'login-item',
+              title: 'Login',
+              type: 'item',
+              icon: 'material-icons-two-tone',
+              iconname: 'login',
+              url: '/auth/login'
+            }
+          ]
+        }
+      ];
+    }
 
-    // 👤 Non super-admin (regular user) menu
+    // ===========================
+    // Non Super Admin
+    // ===========================
     if (!isSuperAdmin) {
       return [
         {
@@ -27,11 +51,33 @@ const useMenuItems = () => {
               url: '/cars/list-cars'
             }
           ]
+        },
+
+        // ⭐ LOGOUT WITH ICON
+        {
+          id: 'logout',
+          title: 'Logout',
+          type: 'group',
+          icon: 'material-icons-two-tone',
+          iconname: 'exit_to_app',   // ⭐ switch out icon
+          children: [
+            {
+              id: 'logout-item',
+              title: 'Logout',
+              type: 'item',
+              icon: 'material-icons-two-tone',
+              iconname: 'exit_to_app',   // ⭐ switch out icon
+              url: '/auth/logout'
+            }
+          ]
         }
+
       ];
     }
 
-    // 🧑‍💼 Super Admin menu
+    // ===========================
+    // Super Admin Menu
+
     return [
       {
         id: 'navigation',
@@ -49,6 +95,7 @@ const useMenuItems = () => {
           }
         ]
       },
+
       {
         id: 'car',
         title: 'Cars',
@@ -68,6 +115,7 @@ const useMenuItems = () => {
           }
         ]
       },
+
       {
         id: 'users',
         title: 'Users',
@@ -86,7 +134,27 @@ const useMenuItems = () => {
             ]
           }
         ]
+      },
+
+      // ⭐ LOGOUT WITH ICON
+      {
+        id: 'logout',
+        title: 'Logout',
+        type: 'group',
+        icon: 'material-icons-two-tone',
+        iconname: 'exit_to_app',   // ⭐ switch out icon
+        children: [
+          {
+            id: 'logout-item',
+            title: 'Logout',
+            type: 'item',
+            icon: 'material-icons-two-tone',
+            iconname: 'exit_to_app',   // ⭐ switch out icon
+            url: '/auth/logout'
+          }
+        ]
       }
+
     ];
   }, [user, isSuperAdmin]);
 

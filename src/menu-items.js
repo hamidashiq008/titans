@@ -1,12 +1,6 @@
-// Get user role from localStorage or your auth state
-const getUserRole = () => {
-  try {
-    const user = JSON.parse(localStorage.getItem('user')) || {};
-    return user.roles?.[0]?.name || '';
-  } catch (e) {
-    return '';
-  }
-};
+// Read user role from Redux store (fallback only; primary menu is useMenuItems hook)
+import { store } from './redux/store';
+const getUserRole = () => (store.getState()?.auth?.user?.role) || '';
 
 const isSuperAdmin = getUserRole() === 'super-admin';
 

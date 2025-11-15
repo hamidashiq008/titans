@@ -9,7 +9,7 @@ export const login = createAsyncThunk(
     async ({ email, password }, { rejectWithValue }) => {
         try {
             const res = await axios.post('/auth/login', { email, password });
-            localStorage.setItem('access_token', res.data.access_token);
+            // localStorage.setItem('access_token', res.data.access_token);
             toast.success('Logged in successfully');
             return res.data;
         } catch (error) {
@@ -25,7 +25,7 @@ const initialState = {
     loading: false,
     error: null,
 };
-
+// console.log("user",initialState?.user   )
 const authSlice = createSlice({
     name: 'auth',
     initialState,
@@ -36,7 +36,7 @@ const authSlice = createSlice({
         logout: (state) => {
             state.user = null;
             state.token = null;
-            localStorage.removeItem('access_token');
+            // localStorage.removeItem('access_token');
         },
     },
     extraReducers: (builder) => {

@@ -7,7 +7,7 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import { SketchPicker } from 'react-color'
 import { useNavigate } from 'react-router-dom'
 import { pdf } from '@react-pdf/renderer'
-import { SingleCarDocument, CarsListDocument } from '../../pdf/CarsPdf'
+import { SingleCarDocument, CarsListDocument } from '../../pdf/CarsPdf';
 
 const ListCars = () => {
     const { user } = useSelector((state) => state.auth);
@@ -368,7 +368,7 @@ const ListCars = () => {
         try {
             const response = await axios.get('/cars/export/pdf');
             const pdfUrl = response.data.url;
-            window.open(pdfUrl, '_blank');
+       
             const a = document.createElement('a');
             a.href = pdfUrl;
             a.download = 'cars-list.pdf';
@@ -700,176 +700,7 @@ const ListCars = () => {
                             </div>
                         )}
                     </div>
-                    {showModal && (
-                        <div className="position-fixed top-0 start-0 w-100 h-100" style={{ background: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
-                            <div className="d-flex align-items-center justify-content-center h-100 p-3">
-                                <div className="bg-white rounded shadow p-3" style={{ width: '100%', maxWidth: 720 }}>
-                                    <div className="d-flex justify-content-between align-items-center mb-3">
-                                        <h5 className="m-0">Edit Car</h5>
-                                        {/* <button type="button" className="btn btn-sm btn-outline-secondary" onClick={closeModal}>Close</button> */}
-                                    </div>
-                                    <div className="row g-3">
-                                        <div className="col-md-6">
-                                            <label className="form-label">Car Name</label>
-                                            <input type="text" className="form-control" name="name" value={editForm.name} onChange={handleEditChange} />
-                                        </div>
-                                        <div className="col-md-6">
-                                            <label className="form-label">Source</label>
-                                            <select className="form-select" name="source" value={editForm.source} onChange={handleEditChange}>
-                                                <option value="">Select source</option>
-                                                <option value="showroom">Showroom</option>
-                                                <option value="private">Private</option>
-                                                <option value="imported">Imported</option>
-                                            </select>
-                                        </div>
-                                        <div className="col-md-6">
-                                            <label className="form-label">Model</label>
-                                            <input type="text" className="form-control" name="model" value={editForm.model} onChange={handleEditChange} />
-                                        </div>
-                                        <div className="col-md-6 position-relative">
-                                            <label className="form-label">Colour</label>
-                                            <div className="d-flex">
-                                                <input
-                                                    ref={inputRefEdit}
-                                                    type="text"
-                                                    className="form-control"
-                                                    name="colour"
-                                                    disabled={!isSuperAdmin}
-                                                    value={editForm.colour || ''}
-                                                    onFocus={() => setShowColorPickerEdit(true)}
-                                                    onChange={handleEditChange}
-                                                    placeholder="Click to pick color"
-                                                />
-                                                <div
-                                                    className="border rounded"
-                                                    style={{ width: 40, height: 43, backgroundColor: editForm.colour || '#ffffff' }}
-                                                />
-                                            </div>
-                                            {showColorPickerEdit && (
-                                                <div ref={colorPickerRefEdit} className="position-absolute" style={{ zIndex: 1000, marginTop: 8 }}>
-                                                    <SketchPicker
-                                                        color={editForm.colour || '#ffffff'}
-                                                        onChange={(color) => {
-                                                            const rgb = `rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b}${color.rgb.a !== 1 ? `, ${color.rgb.a}` : ''})`
-                                                            setEditForm((prev) => ({ ...prev, colour: rgb }))
-                                                        }}
-                                                    />
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="col-md-6">
-                                            <label className="form-label">Chassis Number</label>
-                                            <input type="text" className="form-control" name="chasis_number" value={editForm.chasis_number} onChange={handleEditChange} />
-                                        </div>
-                                        <div className="col-md-6">
-                                            <label className="form-label">Car Status</label>
-                                            <select className="form-select" name="status" value={editForm.status} onChange={handleEditChange}>
-                                                <option value="">Select status</option>
-                                                <option value="available">Available</option>
-                                                <option value="rented">Rented</option>
-                                                <option value="maintenance">Under Maintenance</option>
-                                            </select>
-                                        </div>
-                                        <div className="col-md-6">
-                                            <label className="form-label">Rent Type</label>
-                                            <select className="form-select" name="rent_period" value={editForm.rent_period} onChange={handleEditChange}>
-                                                <option value="">Select rent duration</option>
-                                                <option value="monthly">Monthly</option>
-                                                <option value="15_days">15 Days</option>
-                                                <option value="weekly">Weekly</option>
-                                                <option value="daily">Daily</option>
-                                            </select>
-                                        </div>
-                                        <div className="col-md-6">
-                                            <label className="form-label">Rent Price</label>
-                                            <input type="number" className="form-control" name="rent_price" value={editForm?.rent_price} onChange={handleEditChange} />
-                                        </div>
-                                        <div className="col-12">
-                                            <label className="form-label">Images</label>
-                                            <input
-                                                type="file"
-                                                className="form-control mb-3"
-                                                multiple
-                                                accept="image/*"
-                                                onChange={handleEditChange}
-                                                name="images"
-                                                disabled={!isSuperAdmin}
-                                            />
-
-                                            <div className='d-flex gap-3'>
-                                                {/* Existing Images */}
-                                                <div className="d-flex flex-wrap gap-3 mb-3 ">
-                                                    {editForm.existingImages.map((image, index) => (
-                                                        <div key={`existing-${image.id}`} className="position-relative" style={{ width: '150px', height: '100px' }}>
-                                                            <img
-                                                                src={image.url}
-                                                                alt={`Car image ${index + 1}`}
-                                                                className="img-fluid rounded border"
-                                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                                            />
-                                                            {
-                                                                isSuperAdmin ? (
-                                                                    <button
-                                                                        type="button"
-                                                                        className="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 p-1 rounded-circle"
-                                                                        onClick={() => removeEditImage(image.id, false)}
-                                                                        style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                                                    >
-                                                                        ×
-                                                                    </button>
-                                                                ) : null
-                                                            }
-                                                        </div>
-                                                    ))}
-                                                </div>
-
-                                                {/* Newly Added Images */}
-                                                <div className="d-flex flex-wrap gap-3">
-                                                    {editForm.images.map((image, index) => (
-                                                        <div key={`new-${image.id}`} className="position-relative" style={{ width: '150px', height: '100px' }}>
-                                                            <img
-                                                                src={image.url}
-                                                                alt={`New image ${index + 1}`}
-                                                                className="img-fluid rounded border"
-                                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                                            />
-                                                            {
-                                                                isSuperAdmin ? (
-                                                                    <button
-                                                                        type="button"
-                                                                        className="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 p-1 rounded-circle"
-                                                                        onClick={() => removeEditImage(image.id, true)}
-                                                                        style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                                                    >
-                                                                        ×
-                                                                    </button>
-                                                                ) : null}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="col-md-6 d-flex align-items-end">
-                                            <div className="form-check">
-                                                <input className="form-check-input" type="checkbox" id="edit_available_for_sale" name="available_for_sale" checked={editForm.available_for_sale} onChange={handleEditChange} />
-                                                <label className="form-check-label" htmlFor="edit_available_for_sale">Available for sale</label>
-                                            </div>
-                                        </div>
-
-                                        <div className="col-12 d-flex justify-content-end gap-2 mt-2">
-                                            <button type="button" className="btn btn-secondary" onClick={closeModal} disabled={saving}>Cancel</button>
-                                            <button type="button" className="btn btn-primary" onClick={saveEdit} disabled={saving}>
-                                                {saving && <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>}
-                                                Save Changes
-                                            </button>
-                                        </div>
-
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+              
                     {showDeleteModal && (
                         <div className="position-fixed top-0 start-0 w-100 h-100" style={{ background: 'rgba(0,0,0,0.5)', zIndex: 1060 }}>
                             <div className="d-flex align-items-center justify-content-center h-100 p-3">
