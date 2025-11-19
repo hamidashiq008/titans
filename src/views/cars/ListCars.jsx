@@ -7,7 +7,9 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import { SketchPicker } from 'react-color'
 import { useNavigate } from 'react-router-dom'
 import { pdf } from '@react-pdf/renderer'
-import { SingleCarDocument, CarsListDocument } from '../../pdf/CarsPdf';
+import { SingleCarDocument } from '../../pdf/CarsPdf';
+import { CarsListDocument } from './AllCarsDown';
+
 
 const ListCars = () => {
     const { user } = useSelector((state) => state.auth);
@@ -366,18 +368,35 @@ const ListCars = () => {
         if (downloadingAll) return;
         setDownloadingAll(true);
         try {
-            const response = await axios.get('/cars/export/pdf');
-            const pdfUrl = response.data.url;
-       
+            // Fetch ALL cars without pagination for the PDF
+            const { data } = await axios.get('/cars', {
+                params: {
+                    per_page: 10000, // Large number to get all cars
+                    sort_by: 'id',
+                    sort_order: 'desc'
+                }
+            });
+
+            // Extract all cars from the response
+            const allCars = Array.isArray(data) ? data : (data.data || []);
+
+            console.log(`Downloading PDF with ${allCars.length} cars`);
+
+            // Use ALL cars for PDF generation
+            const blob = await pdf(<CarsListDocument cars={allCars} />).toBlob();
+            const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = pdfUrl;
-            a.download = 'cars-list.pdf';
+            a.href = url;
+            a.download = `all-cars-${new Date().toISOString().split('T')[0]}.pdf`;
             document.body.appendChild(a);
             a.click();
             a.remove();
+            URL.revokeObjectURL(url);
+
+            toast.success(`Downloaded PDF with ${allCars.length} cars`);
         } catch (e) {
-            console.error('Failed to download cars PDF from backend', e);
-            toast.error(e?.response?.data?.message || e.message || 'Failed to download');
+            console.error('Failed to generate cars PDF', e);
+            toast.error('Failed to generate PDF');
         } finally {
             setDownloadingAll(false);
         }
@@ -700,7 +719,7 @@ const ListCars = () => {
                             </div>
                         )}
                     </div>
-              
+
                     {showDeleteModal && (
                         <div className="position-fixed top-0 start-0 w-100 h-100" style={{ background: 'rgba(0,0,0,0.5)', zIndex: 1060 }}>
                             <div className="d-flex align-items-center justify-content-center h-100 p-3">
@@ -741,7 +760,7 @@ const ListCars = () => {
                             {currentCarImages.map((img, idx) => (
                                 <Carousel.Item key={idx}>
                                     {console.log('img', img?.url)}
-                                    <div className="position-relative d-flex align-items-center justify-content-center" style={{height: '500px' }}>
+                                    <div className="position-relative d-flex align-items-center justify-content-center" style={{ height: '500px' }}>
                                         {loadingImages[idx] && (
                                             <div className="position-absolute top-50 start-50 translate-middle">
                                                 <div className="spinner-border text-primary" role="status">
