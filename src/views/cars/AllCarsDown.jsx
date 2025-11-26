@@ -1,5 +1,6 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
+import axios from '../../axios/Axios';
 
 // Styles for Cars List Document
 const styles = StyleSheet.create({
@@ -205,7 +206,8 @@ const extractImageUrls = (car) => {
                 const original = typeof u === 'string' ? u : u?.url;
                 if (!original) return '';
                 const filename = original.split('/').pop();
-                return `http://127.0.0.1:8000/api/car-image/${filename}`;
+                return `${axios.defaults.baseURL}/car-image/${filename}`;
+                // return `http://127.0.0.1:8000/api/car-image/${filename}`;
             })
             .filter(Boolean)
         : [];

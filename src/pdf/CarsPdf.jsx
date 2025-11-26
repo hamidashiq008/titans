@@ -1,6 +1,6 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
-
+import axios from '../axios/Axios';
 // Styles
 const styles = StyleSheet.create({
   page: {
@@ -125,11 +125,31 @@ const extractImageUrls = (car) => {
           const original = typeof u === 'string' ? u : u?.url;
           if (!original) return '';
           const filename = original.split('/').pop();
-          return `http://127.0.0.1:8000/api/car-image/${filename}`;
+          return `${axios.defaults.baseURL}/car-image/${filename}`;
+          // return `http://127.0.0.1:8000/api/car-image/${filename}`;
         })
         .filter(Boolean)
     : [];
 };
+
+
+// const extractImageUrls = (car) => {
+//   const urls = car?.image_urls || car?.images?.[0]?.image_urls || [];
+
+//   return Array.isArray(urls)
+//     ? urls
+//         .map((u) => {
+//           const original = typeof u === "string" ? u : u?.url;
+//           if (!original) return "";
+          
+//           const filename = original.split("/").pop();
+
+//           // 👇 Use axios baseURL dynamically
+//           return `${axios.defaults.baseURL}/api/car-image/${filename}`;
+//         })
+//         .filter(Boolean)
+//     : [];
+// };
 
 // Single Car PDF
 export const SingleCarDocument = ({ car, logoUrl }) => {

@@ -3,8 +3,8 @@ import { store } from '../redux/store';
 import { logout } from '../redux/slices/AuthSlice';
 // Create axios instance with base URL
 const instance = axios.create({
-    // baseURL: 'https://titans-laravel.edexceledu.com/api',
-    baseURL: 'http://127.0.0.1:8000/api',
+    baseURL: 'https://titans-laravel.edexceledu.com/api',
+    // baseURL: 'http://127.0.0.1:8000/api',
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
